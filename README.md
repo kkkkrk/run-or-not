@@ -1,36 +1,9 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 뛸까말까 🏃🏻
+현위치에서 역까지 도보 거리 + 실시간 지하철 도착 정보로 지금 뛰어가면 탈 수 있나를 판정한다.
 
-## Getting Started
+## 동기
+아침에 급한 상황에서 지도 어플을 통해 검색해서 열차 확인 후 내 남은 거리를 생각하며 뛸지 말지 결정하기 불편했다. 매일 같은 상황인데 그냥 켜자마자 확인할 수는 없을까? 에서 시작되었다.
 
-First, run the development server:
+## 설계 결정
+nextjs 사용. http 요청을 해야하고 api키를 보관하여야 하여 SSR이 필요하다고 판단하였다. 또한 랜더링 속도를 높이기 위해 SSG도 필요하였다.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
