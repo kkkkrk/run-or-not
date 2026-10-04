@@ -1,9 +1,14 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
+@theme {
+  --font-sans: "Pretendard Variable", Pretendard, system-ui, sans-serif;
+}
+
 
 @custom-variant dark (&:is(.dark *));
-/* 뛸까말까용 추가 */
+
 button, a {
   touch-action: manipulation;          /* 모바일 더블탭 줌 지연 제거 → 탭 반응 빠릿하게 */
   -webkit-tap-highlight-color: transparent;

@@ -23,7 +23,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={cn(geistSans.variable, geistMono.variable, "font-sans", inter.variable)}>
-      <body>{children}</body>
+      <body className="bg-gray-50">
+        <div className="mx-auto w-full max-w-150 min-h-dvh bg-white shadow">
+          {children}
+        </div>
+      </body>
     </html>
   );
 }
