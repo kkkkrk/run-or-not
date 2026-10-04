@@ -25,7 +25,7 @@ export default function Station(){
             <main className="flex flex-col flex-1 justify-between items-center mt-4">
                 <div className="flex flex-col items-center">
                     <h1 className="mb-4 text-6xl font-black text-[#12B76A]">
-                        걸어도 돼
+                        걸어가요
                     </h1>
                     <p className="text-lg font-medium text-slate-600">
                         다음 열차는 걸어가도 4분 10초 남아요
