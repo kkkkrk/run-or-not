@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { ChevronRight, ArrowRightLeft ,Settings } from "lucide-react"
+import { ChevronRight ,Settings } from "lucide-react"
 import Runner from "@/app/Runner"
 
 export default function Station(){
@@ -26,7 +26,7 @@ export default function Station(){
                 <div className="flex flex-col items-center">
                     <h1 className="mb-4 text-6xl font-black text-[#12B76A]">
                         걸어가요
-                    </h1>
+                    </h1> 
                     <p className="text-lg font-medium text-slate-600">
                         다음 열차는 걸어가도 4분 10초 남아요
                     </p>
