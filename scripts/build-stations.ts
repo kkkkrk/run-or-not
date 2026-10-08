@@ -8,8 +8,10 @@
  * 하는 일
  *   1. 원본의 route(법정 노선명)를 실제 운행 호선으로 바꾼다 (경부선 → 1호선 등)
  *   2. 한 행이 여러 호선인 역은 호선마다 Station을 만든다 (ROW_OVERRIDES)
- *   3. 같은 (표시명, 호선)이 두 번 나오면 id가 작은 쪽 하나만 남긴다
- *   4. id 순으로 정렬해 쓴다 → 다시 돌려도 결과가 같다
+ *   3. 표시명과 서울시 API 역명이 다른 역은 apiName을 바꾼다 (API_NAME_OVERRIDES)
+ *   4. 같은 (표시명, 호선)이 두 번 나오면 id가 작은 쪽 하나만 남긴다
+ *   5. 실시간 API가 데이터를 주지 않는 역을 뺀다 (EXCLUDED_STATIONS)
+ *   6. id 순으로 정렬해 쓴다 → 다시 돌려도 결과가 같다
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
@@ -20,11 +22,11 @@ const OUT_PATH = path.join(process.cwd(), "src/data/stations.json");
 
 // ── 원본 모양 ────────────────────────────────────────────────
 type RawRow = {
-  bldn_id: string; // 역사 ID. 앞자리 0이 있으니 숫자로 바꾸지 않는다 ("0150")
-  route: string; //   법정 노선명 (호선이 아님: 경부선, 일산선 …)
-  bldn_nm: string; // 역사명 "공릉(서울과학기술대)"
-  lat: string; //     위도
-  lot: string; //     경도
+    bldn_id: string; // 역사 ID. 앞자리 0이 있으니 숫자로 바꾸지 않는다 ("0150")
+    route: string; //   법정 노선명 (호선이 아님: 경부선, 일산선 …)
+    bldn_nm: string; // 역사명 "공릉(서울과학기술대)"
+    lat: string; //     위도
+    lot: string; //     경도
 };
 type RawFile = { DESCRIPTION: Record<string, string>; DATA: RawRow[] };
 
@@ -96,17 +98,43 @@ const ROUTE_TO_LINE: Partial<Record<string, LineName>> = {
 // ── 행 단위 예외: route 규칙 대신 이 호선들로 만든다 ───────────
 // 원본에 없는 호선(한 행 = 여러 호선, 누락된 행)도 여기서 보충한다
 const ROW_OVERRIDES: Partial<Record<string, readonly LineName[]>> = {
-  "1003": ["1호선", "경의중앙선"], //      용산
-  "1008": ["경의중앙선"], //                이촌 (route=경원선이지만 1호선 아님)
-  "1009": ["경의중앙선"], //                서빙고
-  "1010": ["경의중앙선"], //                한남
-  "1011": ["경의중앙선"], //                옥수
-  "1012": ["경의중앙선"], //                응봉
-  "1013": ["경의중앙선", "수인분당선"], // 왕십리 (2·5호선은 별도 행)
-  "1014": ["경의중앙선", "수인분당선"], // 청량리 (1호선은 0158 행)
-  "1015": ["1호선", "경의중앙선"], //      회기
-  "1953": ["3호선", "경의중앙선"], //      대곡 (원본에 경의중앙선 대곡 행이 없음)
+    "1003": ["1호선", "경의중앙선"], //      용산
+    "1008": ["경의중앙선"], //                이촌 (route=경원선이지만 1호선 아님)
+    "1009": ["경의중앙선"], //                서빙고
+    "1010": ["경의중앙선"], //                한남
+    "1011": ["경의중앙선"], //                옥수
+    "1012": ["경의중앙선"], //                응봉
+    "1013": ["경의중앙선", "수인분당선"], // 왕십리 (2·5호선은 별도 행)
+    "1014": ["경의중앙선", "수인분당선"], // 청량리 (1호선은 0158 행)
+    "1015": ["1호선", "경의중앙선"], //      회기
+    "1953": ["3호선", "경의중앙선"], //      대곡 (원본에 경의중앙선 대곡 행이 없음)
 };
+
+// ── API 역명 예외: 표시명 → 서울시 실시간 API 역명 ────────────
+// 출처: 서울시 지하철 실시간 도착정보(OA-12764) 데이터셋 설명의 「역조회시 참조」 (2026-10-08 확인)
+//       서울역 → 서울: 같은 페이지의 "샘플 키로는 '서울'역만 조회 가능" 안내
+// 표시명 기준이라 같은 역이면 호선이 달라도 같은 값을 쓴다 (천호 5·8호선)
+// 3단계에서 실제로 조회해 보며 늘어난다
+const API_NAME_OVERRIDES: Partial<Record<string, string>> = {
+    공릉: "공릉(서울산업대입구)",
+    남한산성입구: "남한산성입구(성남법원, 검찰청)",
+    대모산입구: "대모산",
+    몽촌토성: "몽촌토성(평화의문)",
+    서울역: "서울",
+    응암: "응암순환(상선)",
+    천호: "천호(풍납토성)",
+};
+
+// ── 실시간 API 미제공 역: 목록에서 뺀다 (컨텍스트 7절) ─────────
+// 키는 "표시명|호선". 같은 이름의 다른 역(5호선 양평 ↔ 경의중앙선 양평)을 같이 지우지 않으려고 호선까지 쓴다
+// 출처: OA-12764 「서울시 이외의 역구간은 미제공 (예, 광명, 서동탄, 춘천 등)」 — 지금은 예시로 든 역만.
+//       나머지는 3단계에서 조회해 데이터가 안 오면 추가한다
+type StationKey = `${string}|${LineName}`;
+const EXCLUDED_STATIONS: readonly StationKey[] = [
+    "광명|1호선",
+    "서동탄|1호선",
+    "춘천|경춘선",
+];
 
 // 한국 대략 범위. 위도·경도를 바꿔 넣은 행이나 빈 값을 잡는다
 const LAT_RANGE = [33, 39] as const;
@@ -131,7 +159,7 @@ function linesOf(row: RawRow): readonly LineName[] {
     if (override) return override;
     const line = ROUTE_TO_LINE[row.route];
     return line ? [line] : [];
-}   
+}
 
 /** 행 하나 → Station 0개 이상 (지원 안 하는 노선이면 0개, 여러 호선이면 여러 개) */
 function toStations(row: RawRow): Station[] {
@@ -147,20 +175,23 @@ function toStations(row: RawRow): Station[] {
 
     const name = toDisplayName(row.bldn_nm);
     return lines.map((lineName) => {
-    const subwayId = LINES[lineName];
-    return {
-        id: `${row.bldn_id}-${subwayId}`, // 한 행이 여러 호선이 돼도 항상 고유
-        name,
-        apiName: name, // API 역명 예외는 2-3에서
-        subwayId,
-        lineName,
-        lat,
-        lng,
-    };});
+        const subwayId = LINES[lineName];
+        return {
+            id: `${row.bldn_id}-${subwayId}`, // 한 행이 여러 호선이 돼도 항상 고유
+            name,
+            apiName: API_NAME_OVERRIDES[name] ?? name,
+            subwayId,
+            lineName,
+            lat,
+            lng,
+        };
+    });
 }
 
 // id는 ASCII뿐이라 localeCompare 대신 단순 비교 (실행 환경 로케일과 무관하게 같은 순서)
 const byId = (a: Station, b: Station): number => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+
+const keyOf = (s: Station): string => `${s.name}|${s.lineName}`;
 
 type Dropped = { station: Station; keptId: string };
 
@@ -174,7 +205,16 @@ function dedupe(stations: Station[]): { kept: Station[]; dropped: Dropped[] } {
         if (existing) dropped.push({ station: s, keptId: existing.id });
         else keptByKey.set(key, s);
     }
-  return { kept: [...keptByKey.values()], dropped }; // Map은 넣은 순서 유지 → 이미 정렬됨
+    return { kept: [...keptByKey.values()], dropped }; // Map은 넣은 순서 유지 → 이미 정렬됨
+}
+
+/** EXCLUDED_STATIONS에 있는 역을 뺀다. 순서는 유지 */
+function excludeUnsupported(stations: Station[]): { kept: Station[]; excluded: Station[] } {
+    const keys = new Set<string>(EXCLUDED_STATIONS);
+    const kept: Station[] = [];
+    const excluded: Station[] = [];
+    for (const s of stations) (keys.has(keyOf(s)) ? excluded : kept).push(s);
+    return { kept, excluded };
 }
 
 // ── 실행 ─────────────────────────────────────────────────────
@@ -185,13 +225,17 @@ function main(): void {
     const rows = raw.DATA;
 
     const converted = rows.flatMap(toStations);
-    const { kept, dropped } = dedupe(converted);
+    const { kept: unique, dropped } = dedupe(converted);
+    const { kept, excluded } = excludeUnsupported(unique);
 
     mkdirSync(path.dirname(OUT_PATH), { recursive: true });
     writeFileSync(OUT_PATH, JSON.stringify(kept, null, 2) + "\n");
 
-  // ── 확인용 출력 ──
-    console.log(`원본 ${rows.length}행 → 변환 ${converted.length}개 → 중복 제거 ${dropped.length}개 → 결과 ${kept.length}개`);
+    // ── 확인용 출력 ──
+    console.log(
+    `원본 ${rows.length}행 → 변환 ${converted.length}개 → 중복 제거 ${dropped.length}개` +
+        ` → 미제공 제외 ${excluded.length}개 → 결과 ${kept.length}개`,
+    );
     console.log(`저장: ${path.relative(process.cwd(), OUT_PATH)}`);
 
     const skippedRoutes = new Map<string, number>();
@@ -210,9 +254,29 @@ function main(): void {
         }
     }
 
+    if (excluded.length > 0) {
+        console.log("\n실시간 API 미제공으로 제외 (EXCLUDED_STATIONS)");
+        for (const s of excluded) console.log(`  ${s.lineName} ${s.name} (${s.id})`);
+    }
+
+    const renamed = kept.filter((s) => s.apiName !== s.name);
+    if (renamed.length > 0) {
+        console.log("\nAPI 역명 예외 적용 (API_NAME_OVERRIDES)");
+        for (const s of renamed) console.log(`  ${s.lineName} ${s.name} → ${s.apiName}`);
+    }
+
+    // ── 오타 잡기: 예외 표의 키가 실제 데이터와 하나도 안 맞으면 경고 ──
     const ids = new Set(rows.map((r) => r.bldn_id));
-    const unused = Object.keys(ROW_OVERRIDES).filter((id) => !ids.has(id));
-    if (unused.length > 0) console.warn(`\n! 원본에 없는 ROW_OVERRIDES id: ${unused.join(", ")}`);
+    const unusedRows = Object.keys(ROW_OVERRIDES).filter((id) => !ids.has(id));
+    if (unusedRows.length > 0) console.warn(`\n! 원본에 없는 ROW_OVERRIDES id: ${unusedRows.join(", ")}`);
+
+    const names = new Set(converted.map((s) => s.name));
+    const unusedNames = Object.keys(API_NAME_OVERRIDES).filter((n) => !names.has(n));
+    if (unusedNames.length > 0) console.warn(`! 데이터에 없는 API_NAME_OVERRIDES 표시명: ${unusedNames.join(", ")}`);
+
+    const keys = new Set(unique.map(keyOf));
+    const unusedKeys = EXCLUDED_STATIONS.filter((k) => !keys.has(k));
+    if (unusedKeys.length > 0) console.warn(`! 데이터에 없는 EXCLUDED_STATIONS 키: ${unusedKeys.join(", ")}`);
 
     console.log("\n호선별 역 수");
     for (const line of Object.keys(LINES) as LineName[]) {
