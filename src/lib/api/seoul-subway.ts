@@ -1,13 +1,21 @@
 import 'server-only';
 
-export async function fetchRealtimeArrival() {
-    const url = "http://swopenapi.seoul.go.kr/api/subway/6f5a4d4642736177373065734f6958/json/realtimeStationArrival/0/10/%EA%B5%AC%EC%9D%98";
-    // const url = "http://swopenapi.seoul.go.kr/api/subway/sample/json/realtimeStationArrival/0/5/%EC%84%9C%EC%9A%88";
-    const res = await fetch(url);
-    const data = await res.json();
-    console.log('실시간 지하철: ', data);
+const BASE = "http://swopenapi.seoul.go.kr/api/subway"; 
+export async function fetchRealtimeArrivals(apiName:string):Promise<unknown> {
+    const key = process.env.SEOUL_API_KEY;
+    if(!key){
+        throw new Error("SEOUL_API_KEY 환경 변수가 없습니다"); 
+    } 
+    const url = `${BASE}/${key}/json/realtimeStationArrival/0/30/${encodeURIComponent(apiName)}`;
+    //TODO: revalidate 시간 늘리기
+    const res = await fetch(url, {next: {revalidate: 2}}); 
+    if(!res.ok){
+        throw new Error(`HTTP 에러: ${res.status}`)
+    }
+    const data = await res.json(); 
     return data;
 } 
+
 
 
 
