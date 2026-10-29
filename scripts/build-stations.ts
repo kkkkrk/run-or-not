@@ -228,8 +228,8 @@ function main(): void {
     const { kept: unique, dropped } = dedupe(converted);
     const { kept, excluded } = excludeUnsupported(unique);
 
-    mkdirSync(path.dirname(OUT_PATH), { recursive: true });
-    writeFileSync(OUT_PATH, JSON.stringify(kept, null, 2) + "\n");
+    mkdirSync(path.dirname(OUT_PATH), { recursive: true }); //recursive:true 폴더가 이미 있으면 에러 없이 넘김
+    writeFileSync(OUT_PATH, JSON.stringify(kept, null, 2) + "\n"); // 파일이 없으면 만들고 있으면 통째로 바꿈
 
     // ── 확인용 출력 ──
     console.log(
