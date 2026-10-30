@@ -7,3 +7,21 @@ export type Station = {
     lat: number;
     lng: number;
 };
+
+export type Direction = "up" | "down";
+
+export type ArrivalObservation = {
+    trainNo: string; 
+    subwayId: string; 
+    direction: Direction;
+    destination: string; 
+    label: string; 
+    message: string;
+    observedAt: number;    // recptnDt(+09:00) → ms
+    remainingSec: number;  // barvlDt, 0·빈 값은 이미 걸러짐
+};
+
+export type Arrival = Omit<ArrivalObservation, "observedAt" | "remainingSec"> & {
+    arrivalAt: number;
+    basis: "changed" | "first-seen";
+};
