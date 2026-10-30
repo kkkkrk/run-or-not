@@ -8,7 +8,7 @@ export async function fetchRealtimeArrivals(apiName:string):Promise<unknown> {
     } 
     const url = `${BASE}/${key}/json/realtimeStationArrival/0/30/${encodeURIComponent(apiName)}`;
     //TODO: revalidate 시간 늘리기
-    const res = await fetch(url, {next: {revalidate: 2}}); 
+    const res = await fetch(url, {cache: "no-store"}); 
     if(!res.ok){
         throw new Error(`HTTP 에러: ${res.status}`)
     }
