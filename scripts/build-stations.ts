@@ -8,7 +8,7 @@
  * 하는 일
  *   1. 원본의 route(법정 노선명)를 실제 운행 호선으로 바꾼다 (경부선 → 1호선 등)
  *   2. 한 행이 여러 호선인 역은 호선마다 Station을 만든다 (ROW_OVERRIDES)
- *   3. 표시명과 서울시 API 역명이 다른 역은 apiName을 바꾼다 (API_NAME_OVERRIDES)
+ *   3. 표시명과 서울시 API 역명이 다른 (역, 호선)은 apiName을 바꾼다 (API_NAME_OVERRIDES)
  *   4. 같은 (표시명, 호선)이 두 번 나오면 id가 작은 쪽 하나만 남긴다
  *   5. 판정할 수 없는 역을 뺀다
  *      - 노선 단위: 남은 시간(barvlDt)을 주지 않는 노선 (EXCLUDED_LINES)
@@ -56,6 +56,10 @@ const LINES = {
     "GTX-A": "1032", //    확인
 } as const satisfies Record<string, string>;
 type LineName = keyof typeof LINES;
+
+// 예외 표의 키: "표시명|호선"
+// 표시명은 toDisplayName을 거친 값이다: 원본 "총신대입구(이수)" → "총신대입구"
+type StationKey = `${string}|${LineName}`;
 
 // ── 원본 route → 호선 (기본 규칙) ─────────────────────────────
 // 여기 없는 route는 버린다: 인천1호선, 인천2호선, 의정부선, 에버라인선, 김포골드라인
@@ -113,19 +117,43 @@ const ROW_OVERRIDES: Partial<Record<string, readonly LineName[]>> = {
     "2519": ["2호선", "5호선"], //           까치산 (원본엔 5호선 행만 있음 → 2호선 신정지선 종점이 빠져 2호선이 50개였음)
 };
 
-// ── API 역명 예외: 표시명 → 서울시 실시간 API 역명 ────────────
-// 출처: 서울시 지하철 실시간 도착정보(OA-12764) 데이터셋 설명의 「역조회시 참조」 (2026-10-08 확인)
-//       서울역 → 서울: 같은 페이지의 "샘플 키로는 '서울'역만 조회 가능" 안내
-// 표시명 기준이라 같은 역이면 호선이 달라도 같은 값을 쓴다 (천호 5·8호선)
-// 3단계에서 실제로 조회해 보며 늘어난다
-const API_NAME_OVERRIDES: Partial<Record<string, string>> = {
-    공릉: "공릉(서울산업대입구)",
-    남한산성입구: "남한산성입구(성남법원, 검찰청)",
-    대모산입구: "대모산",
-    몽촌토성: "몽촌토성(평화의문)",
-    서울역: "서울",
-    응암: "응암순환(상선)",
-    천호: "천호(풍납토성)",
+// ── API 역명 예외: "표시명|호선" → 서울시 실시간 API 역명 ────────────
+// 역별 조회는 역명이 정확히 같아야 한다 (괄호를 떼고 "군자"로 조회하면 INFO-200, "군자(능동)"은 INFO-000)
+// 근거: 2026-10-31 realtimeStationArrival/ALL 응답의 statnNm과 대조 (남기는 8개 노선, 역 수 일치 확인)
+// 같은 표시명이라도 호선마다 다를 수 있어 호선까지 키로 쓴다 (5호선 올림픽공원(한국체대) ↔ 9호선 올림픽공원)
+// 노선째 뺀 호선(8호선·수인분당선 등)은 없다. 되살릴 때 ALL로 다시 대조한다
+//   (예전 표에 있던 남한산성입구·몽촌토성(8호선), 대모산입구(수인분당선)는 그때 다시 확인)
+const API_NAME_OVERRIDES: Partial<Record<StationKey, string>> = {
+    // 4호선 ("서울역"으로 조회하면 GTX-A만 나온다)
+    "서울역|4호선": "서울",
+    // 5호선
+    "광나루|5호선": "광나루(장신대)",
+    "군자|5호선": "군자(능동)",
+    "굽은다리|5호선": "굽은다리(강동구민회관앞)",
+    "신정|5호선": "신정(은행정)",
+    "아차산|5호선": "아차산(어린이대공원후문)",
+    "오목교|5호선": "오목교(목동운동장앞)",
+    "올림픽공원|5호선": "올림픽공원(한국체대)",
+    "천호|5호선": "천호(풍납토성)",
+    // 6호선
+    "대흥|6호선": "대흥(서강대앞)",
+    "상월곡|6호선": "상월곡(한국과학기술연구원)",
+    "새절|6호선": "새절(신사)",
+    "안암|6호선": "안암(고대병원앞)",
+    "월곡|6호선": "월곡(동덕여대)",
+    "월드컵경기장|6호선": "월드컵경기장(성산)",
+    "응암|6호선": "응암순환(상선)",
+    "증산|6호선": "증산(명지대앞)",
+    "화랑대|6호선": "화랑대(서울여대입구)",
+    // 7호선
+    "공릉|7호선": "공릉(서울산업대입구)",
+    "군자|7호선": "군자(능동)",
+    "상도|7호선": "상도(중앙대앞)",
+    "숭실대입구|7호선": "숭실대입구(살피재)",
+    "어린이대공원|7호선": "어린이대공원(세종대)",
+    "이수|7호선": "총신대입구(이수)", // 표시명 확인 필요 — 경고가 뜨면 "총신대입구|7호선"
+    // 우이신설선 (API는 띄어 쓴다)
+    "4.19민주묘지|우이신설선": "4.19 민주묘지", // 표시명 확인 필요
 };
 
 // ── 남은 시간(barvlDt)을 주지 않는 노선: 노선째 뺀다 (컨텍스트 7절) ──
@@ -141,10 +169,8 @@ const EXCLUDED_LINES: readonly LineName[] = [
 
 // ── 남는 노선 중 판정할 수 없는 역: 역 단위로 뺀다 (컨텍스트 7절) ──
 // 근거: 2026-10-30 실측 (scripts/raw/README.md 「제외 근거」)
-// 키는 "표시명|호선". 같은 이름의 다른 역(5호선 양평 ↔ 경의중앙선 양평)을 같이 지우지 않으려고 호선까지 쓴다
-// 표시명은 toDisplayName을 거친 값이다: 원본 "총신대입구(이수)" → "총신대입구"
+// 키에 호선까지 쓰는 이유: 같은 이름의 다른 역(5호선 양평 ↔ 경의중앙선 양평)을 같이 지우지 않으려고
 // (예전 광명·서동탄·춘천은 노선째 빠지므로 지웠다. 노선을 되살릴 때 다시 조사한다)
-type StationKey = `${string}|${LineName}`;
 const EXCLUDED_STATIONS: readonly StationKey[] = [
     // 3호선 일산선 (barvlDt 0. 지축 상행만 값이 있으나 ±30초 적중 0%)
     "지축|3호선", "삼송|3호선", "원흥|3호선", "원당|3호선", "화정|3호선", "대곡|3호선",
@@ -158,7 +184,8 @@ const EXCLUDED_STATIONS: readonly StationKey[] = [
     "별내별가람|4호선", "오남|4호선", "진접|4호선",
     // 5호선 하남선 + 강일 (barvlDt 0. 강일은 서울 강동구지만 하남선 시설)
     "강일|5호선", "미사|5호선", "하남풍산|5호선", "하남시청|5호선", "하남검단산|5호선",
-    // 7호선 의정부 (데이터 없음, INFO-200). 광명·부천·인천 13개 역은 barvlDt 100%라 남긴다
+    // 7호선 의정부 (10-30 데이터 없음, INFO-200 — 10-31 ALL에는 barvlDt와 함께 나옴. 재확인 대상)
+    // 광명·부천·인천 13개 역은 barvlDt 100%라 남긴다
     "장암|7호선",
     // 서울 경계 역: 가장 가까운 열차가 서울 밖 구간에 있으면 barvlDt 0 → 판정이 첫 열차를 건너뜀
     // (남태령 상행 100%, 사당 상행 73%, 구파발 하행 56%, 이수 상행 37%). 1호선을 뺀 이유와 같다
@@ -179,7 +206,7 @@ function toDisplayName(bldnNm: string): string {
 }
 
 function parseCoord(value: string, [min, max]: readonly [number, number]): number | null {
-  if (value.trim() === "") return null; // Number("")는 0이라 따로 막는다
+    if (value.trim() === "") return null; // Number("")는 0이라 따로 막는다
     const n = Number(value);
     return Number.isFinite(n) && n >= min && n <= max ? n : null;
 }
@@ -206,10 +233,11 @@ function toStations(row: RawRow): Station[] {
     const name = toDisplayName(row.bldn_nm);
     return lines.map((lineName) => {
         const subwayId = LINES[lineName];
+        const key: StationKey = `${name}|${lineName}`;
         return {
             id: `${row.bldn_id}-${subwayId}`, // 한 행이 여러 호선이 돼도 항상 고유
             name,
-            apiName: API_NAME_OVERRIDES[name] ?? name,
+            apiName: API_NAME_OVERRIDES[key] ?? name,
             subwayId,
             lineName,
             lat,
@@ -290,8 +318,8 @@ function main(): void {
 
     // ── 확인용 출력 ──
     console.log(
-    `원본 ${rows.length}행 → 변환 ${converted.length}개 → 중복 제거 ${dropped.length}개` +
-        ` → 노선 제외 ${byLine.length}개 → 역 제외 ${byStation.length}개 → 결과 ${kept.length}개`,
+        `원본 ${rows.length}행 → 변환 ${converted.length}개 → 중복 제거 ${dropped.length}개` +
+            ` → 노선 제외 ${byLine.length}개 → 역 제외 ${byStation.length}개 → 결과 ${kept.length}개`,
     );
     console.log(`저장: ${path.relative(process.cwd(), OUT_PATH)}`);
 
@@ -331,7 +359,7 @@ function main(): void {
 
     const renamed = kept.filter((s) => s.apiName !== s.name);
     if (renamed.length > 0) {
-        console.log("\nAPI 역명 예외 적용 (API_NAME_OVERRIDES)");
+        console.log(`\nAPI 역명 예외 적용 (API_NAME_OVERRIDES) ${renamed.length}개`);
         for (const s of renamed) console.log(`  ${s.lineName} ${s.name} → ${s.apiName}`);
     }
 
@@ -340,9 +368,10 @@ function main(): void {
     const unusedRows = Object.keys(ROW_OVERRIDES).filter((id) => !ids.has(id));
     if (unusedRows.length > 0) console.warn(`\n! 원본에 없는 ROW_OVERRIDES id: ${unusedRows.join(", ")}`);
 
-    const names = new Set(converted.map((s) => s.name));
-    const unusedNames = Object.keys(API_NAME_OVERRIDES).filter((n) => !names.has(n));
-    if (unusedNames.length > 0) console.warn(`! 데이터에 없는 API_NAME_OVERRIDES 표시명: ${unusedNames.join(", ")}`);
+    // 남은 역(kept) 기준: 노선째 빠진 호선의 키도 쓸모없는 줄이라 같이 잡는다
+    const keptKeys = new Set(kept.map(keyOf));
+    const unusedNames = Object.keys(API_NAME_OVERRIDES).filter((k) => !keptKeys.has(k));
+    if (unusedNames.length > 0) console.warn(`! 남은 역에 없는 API_NAME_OVERRIDES 키: ${unusedNames.join(", ")}`);
 
     if (unmatchedKeys.length > 0) {
         console.warn(`! 역을 하나도 못 뺀 EXCLUDED_STATIONS 키 (오타이거나 노선째 빠진 호선): ${unmatchedKeys.join(", ")}`);
