@@ -10,7 +10,9 @@
  *   2. 한 행이 여러 호선인 역은 호선마다 Station을 만든다 (ROW_OVERRIDES)
  *   3. 표시명과 서울시 API 역명이 다른 역은 apiName을 바꾼다 (API_NAME_OVERRIDES)
  *   4. 같은 (표시명, 호선)이 두 번 나오면 id가 작은 쪽 하나만 남긴다
- *   5. 실시간 API가 데이터를 주지 않는 역을 뺀다 (EXCLUDED_STATIONS)
+ *   5. 판정할 수 없는 역을 뺀다
+ *      - 노선 단위: 남은 시간(barvlDt)을 주지 않는 노선 (EXCLUDED_LINES)
+ *      - 역 단위: 실시간 API가 데이터를 주지 않는 역 (EXCLUDED_STATIONS)
  *   6. id 순으로 정렬해 쓴다 → 다시 돌려도 결과가 같다
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -108,6 +110,7 @@ const ROW_OVERRIDES: Partial<Record<string, readonly LineName[]>> = {
     "1014": ["경의중앙선", "수인분당선"], // 청량리 (1호선은 0158 행)
     "1015": ["1호선", "경의중앙선"], //      회기
     "1953": ["3호선", "경의중앙선"], //      대곡 (원본에 경의중앙선 대곡 행이 없음)
+    "2519": ["2호선", "5호선"], //           까치산 (원본엔 5호선 행만 있음 → 2호선 신정지선 종점이 빠져 2호선이 50개였음)
 };
 
 // ── API 역명 예외: 표시명 → 서울시 실시간 API 역명 ────────────
@@ -125,15 +128,42 @@ const API_NAME_OVERRIDES: Partial<Record<string, string>> = {
     천호: "천호(풍납토성)",
 };
 
-// ── 실시간 API 미제공 역: 목록에서 뺀다 (컨텍스트 7절) ─────────
+// ── 남은 시간(barvlDt)을 주지 않는 노선: 노선째 뺀다 (컨텍스트 7절) ──
+// 근거: 2026-10-29 실측 847회, 경강선은 2026-10-30 실측 (scripts/raw/README.md 「제외 근거」)
+//   위 노선은 아직 안 온 열차의 barvlDt가 늘 0이었다 (경강선 12개 역 5,239행 중 0%)
+//   1호선: 서울교통공사 구간인 종로3가에서도 남은 시간이 있는 열차가 38%뿐 (나머지는 코레일 구간에서 온 열차)
+//          → 일부 역만 남기면 먼저 오는 열차를 판정이 건너뛴다 → 통째로 뺀다
+// LINES·ROUTE_TO_LINE에는 남겨 둔다: MVP 이후 시간표 + 위치로 되살릴 때 subwayId가 필요
+const EXCLUDED_LINES: readonly LineName[] = [
+    "1호선", "8호선", "경의중앙선", "수인분당선", "신분당선",
+    "경춘선", "공항철도", "서해선", "신림선", "GTX-A", "경강선",
+];
+
+// ── 남는 노선 중 판정할 수 없는 역: 역 단위로 뺀다 (컨텍스트 7절) ──
+// 근거: 2026-10-30 실측 (scripts/raw/README.md 「제외 근거」)
 // 키는 "표시명|호선". 같은 이름의 다른 역(5호선 양평 ↔ 경의중앙선 양평)을 같이 지우지 않으려고 호선까지 쓴다
-// 출처: OA-12764 「서울시 이외의 역구간은 미제공 (예, 광명, 서동탄, 춘천 등)」 — 지금은 예시로 든 역만.
-//       나머지는 3단계에서 조회해 데이터가 안 오면 추가한다
+// 표시명은 toDisplayName을 거친 값이다: 원본 "총신대입구(이수)" → "총신대입구"
+// (예전 광명·서동탄·춘천은 노선째 빠지므로 지웠다. 노선을 되살릴 때 다시 조사한다)
 type StationKey = `${string}|${LineName}`;
 const EXCLUDED_STATIONS: readonly StationKey[] = [
-    "광명|1호선",
-    "서동탄|1호선",
-    "춘천|경춘선",
+    // 3호선 일산선 (barvlDt 0. 지축 상행만 값이 있으나 ±30초 적중 0%)
+    "지축|3호선", "삼송|3호선", "원흥|3호선", "원당|3호선", "화정|3호선", "대곡|3호선",
+    "백석|3호선", "마두|3호선", "정발산|3호선", "주엽|3호선", "대화|3호선",
+    // 4호선 과천선 · 안산선 (barvlDt 0)
+    "선바위|4호선", "경마공원|4호선", "대공원|4호선", "과천|4호선", "정부과천청사|4호선",
+    "인덕원|4호선", "평촌|4호선", "범계|4호선", "금정|4호선",
+    "산본|4호선", "수리산|4호선", "대야미|4호선", "반월|4호선", "상록수|4호선", "한대앞|4호선",
+    "중앙|4호선", "고잔|4호선", "초지|4호선", "안산|4호선", "신길온천|4호선", "정왕|4호선", "오이도|4호선",
+    // 4호선 진접선 (데이터 없음, INFO-200)
+    "별내별가람|4호선", "오남|4호선", "진접|4호선",
+    // 5호선 하남선 + 강일 (barvlDt 0. 강일은 서울 강동구지만 하남선 시설)
+    "강일|5호선", "미사|5호선", "하남풍산|5호선", "하남시청|5호선", "하남검단산|5호선",
+    // 7호선 의정부 (데이터 없음, INFO-200). 광명·부천·인천 13개 역은 barvlDt 100%라 남긴다
+    "장암|7호선",
+    // 서울 경계 역: 가장 가까운 열차가 서울 밖 구간에 있으면 barvlDt 0 → 판정이 첫 열차를 건너뜀
+    // (남태령 상행 100%, 사당 상행 73%, 구파발 하행 56%, 이수 상행 37%). 1호선을 뺀 이유와 같다
+    // 같은 역의 다른 호선(사당 2호선, 이수 7호선)은 남는다
+    "구파발|3호선", "남태령|4호선", "사당|4호선", "총신대입구|4호선",
 ];
 
 // 한국 대략 범위. 위도·경도를 바꿔 넣은 행이나 빈 값을 잡는다
@@ -208,13 +238,38 @@ function dedupe(stations: Station[]): { kept: Station[]; dropped: Dropped[] } {
     return { kept: [...keptByKey.values()], dropped }; // Map은 넣은 순서 유지 → 이미 정렬됨
 }
 
-/** EXCLUDED_STATIONS에 있는 역을 뺀다. 순서는 유지 */
-function excludeUnsupported(stations: Station[]): { kept: Station[]; excluded: Station[] } {
+// 왜 빠졌는지. 노선 표를 먼저 본다
+type Excluded = { station: Station; reason: "line" | "station" };
+
+/**
+ * 노선 단위(EXCLUDED_LINES)와 역 단위(EXCLUDED_STATIONS)를 같이 본다. 순서는 유지
+ * unmatchedKeys: 역 하나도 빼지 못한 EXCLUDED_STATIONS 키
+ *   - 오타 ("총신대입구(이수)|4호선"처럼 괄호를 붙인 이름 포함)
+ *   - 노선째 빠진 호선의 키 (노선 표가 먼저라 역 표까지 오지 않음 → 쓸모없는 줄)
+ */
+function excludeUnsupported(stations: Station[]): {
+    kept: Station[];
+    excluded: Excluded[];
+    unmatchedKeys: StationKey[];
+} {
+    const lines = new Set<string>(EXCLUDED_LINES); // Station.lineName이 string이라 Set<string>으로
     const keys = new Set<string>(EXCLUDED_STATIONS);
+    const usedKeys = new Set<string>();
     const kept: Station[] = [];
-    const excluded: Station[] = [];
-    for (const s of stations) (keys.has(keyOf(s)) ? excluded : kept).push(s);
-    return { kept, excluded };
+    const excluded: Excluded[] = [];
+    for (const s of stations) {
+        const key = keyOf(s);
+        if (lines.has(s.lineName)) {
+            excluded.push({ station: s, reason: "line" });
+        } else if (keys.has(key)) {
+            excluded.push({ station: s, reason: "station" });
+            usedKeys.add(key);
+        } else {
+            kept.push(s);
+        }
+    }
+    const unmatchedKeys = EXCLUDED_STATIONS.filter((k) => !usedKeys.has(k));
+    return { kept, excluded, unmatchedKeys };
 }
 
 // ── 실행 ─────────────────────────────────────────────────────
@@ -226,7 +281,9 @@ function main(): void {
 
     const converted = rows.flatMap(toStations);
     const { kept: unique, dropped } = dedupe(converted);
-    const { kept, excluded } = excludeUnsupported(unique);
+    const { kept, excluded, unmatchedKeys } = excludeUnsupported(unique);
+    const byLine = excluded.filter((e) => e.reason === "line").map((e) => e.station);
+    const byStation = excluded.filter((e) => e.reason === "station").map((e) => e.station);
 
     mkdirSync(path.dirname(OUT_PATH), { recursive: true }); //recursive:true 폴더가 이미 있으면 에러 없이 넘김
     writeFileSync(OUT_PATH, JSON.stringify(kept, null, 2) + "\n"); // 파일이 없으면 만들고 있으면 통째로 바꿈
@@ -234,7 +291,7 @@ function main(): void {
     // ── 확인용 출력 ──
     console.log(
     `원본 ${rows.length}행 → 변환 ${converted.length}개 → 중복 제거 ${dropped.length}개` +
-        ` → 미제공 제외 ${excluded.length}개 → 결과 ${kept.length}개`,
+        ` → 노선 제외 ${byLine.length}개 → 역 제외 ${byStation.length}개 → 결과 ${kept.length}개`,
     );
     console.log(`저장: ${path.relative(process.cwd(), OUT_PATH)}`);
 
@@ -254,9 +311,22 @@ function main(): void {
         }
     }
 
-    if (excluded.length > 0) {
-        console.log("\n실시간 API 미제공으로 제외 (EXCLUDED_STATIONS)");
-        for (const s of excluded) console.log(`  ${s.lineName} ${s.name} (${s.id})`);
+    if (byLine.length > 0) {
+        console.log("\n남은 시간을 주지 않아 노선째 제외 (EXCLUDED_LINES)");
+        for (const line of EXCLUDED_LINES) {
+            const n = byLine.filter((s) => s.lineName === line).length;
+            console.log(`  ${line}\t${n}개`);
+        }
+        console.log(`  합계\t${byLine.length}개`);
+    }
+
+    if (byStation.length > 0) {
+        console.log("\n판정할 수 없어 역 단위 제외 (EXCLUDED_STATIONS)");
+        for (const line of new Set(byStation.map((s) => s.lineName))) {
+            const names = byStation.filter((s) => s.lineName === line).map((s) => s.name);
+            console.log(`  ${line}\t${names.length}개: ${names.join(", ")}`);
+        }
+        console.log(`  합계\t${byStation.length}개`);
     }
 
     const renamed = kept.filter((s) => s.apiName !== s.name);
@@ -274,14 +344,15 @@ function main(): void {
     const unusedNames = Object.keys(API_NAME_OVERRIDES).filter((n) => !names.has(n));
     if (unusedNames.length > 0) console.warn(`! 데이터에 없는 API_NAME_OVERRIDES 표시명: ${unusedNames.join(", ")}`);
 
-    const keys = new Set(unique.map(keyOf));
-    const unusedKeys = EXCLUDED_STATIONS.filter((k) => !keys.has(k));
-    if (unusedKeys.length > 0) console.warn(`! 데이터에 없는 EXCLUDED_STATIONS 키: ${unusedKeys.join(", ")}`);
+    if (unmatchedKeys.length > 0) {
+        console.warn(`! 역을 하나도 못 뺀 EXCLUDED_STATIONS 키 (오타이거나 노선째 빠진 호선): ${unmatchedKeys.join(", ")}`);
+    }
 
-    console.log("\n호선별 역 수");
+    const lineSet = new Set<string>(EXCLUDED_LINES);
+    console.log("\n호선별 남은 역 수");
     for (const line of Object.keys(LINES) as LineName[]) {
         const count = kept.filter((s) => s.lineName === line).length;
-        console.log(`  ${line}\t${count}`);
+        console.log(`  ${line}\t${lineSet.has(line) ? "- (노선 제외)" : count}`);
     }
 }
 
