@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# 출근 시간 보정값 측정 데이터 (scripts/collect-arrivals.ts)
+/measure-data/
