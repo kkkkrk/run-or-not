@@ -21,7 +21,10 @@ export type ArrivalObservation = {
     remainingSec: number;  // barvlDt, 0·빈 값은 이미 걸러짐
 };
 
-export type Arrival = Omit<ArrivalObservation, "observedAt" | "remainingSec"> & {
+// /api/arrivals가 404·502일 때 본문 (200이면 ArrivalObservation[])
+export type ArrivalsErrorBody = { error: string };
+
+export type Arrival =Omit<ArrivalObservation, "observedAt" | "remainingSec"> & {
     arrivalAt: number;
     basis: "changed" | "first-seen";
 };
