@@ -71,14 +71,14 @@ const LOOP_DESTINATIONS: ReadonlyArray<{ subwayId: string; bstatnNm: string }> =
  * 실행하는 컴퓨터의 시간대와 상관없이 같은 값이 나와야 한다 (테스트는 TZ=UTC로 돈다)
  */
 export function parseRecptnDt(recptnDt: string): number {
-    // TODO(3-4 직접)
-    throw new Error("TODO 3-4: parseRecptnDt");
+    // "2026-11-01 15:23:41" → "2026-11-01T15:23:41+09:00" (ISO 8601 형식 + 한국 시간대)
+    return Date.parse(recptnDt.replace(" ", "T") + "+09:00");
 }
 
-/** 방향 문자열 → "up" | "down". 상행·내선 → up, 하행·외선 → down. 모르는 값은 null */
 export function toDirection(updnLine: string): Direction | null {
-    // TODO(3-4 직접)
-    throw new Error("TODO 3-4: toDirection");
+    if(updnLine === "상행" || updnLine === "내선") return "up";
+    if(updnLine === "하행" || updnLine === "외선") return "down";
+    return null;
 }
 
 /**
@@ -86,8 +86,13 @@ export function toDirection(updnLine: string): Direction | null {
  * 단, LOOP_DESTINATIONS(순환 표기)에 있으면 계속 가는 열차라 false
  */
 function isTerminatingHere(raw: RawArrival): boolean {
-    // TODO(3-4 직접)
-    throw new Error("TODO 3-4: isTerminatingHere");
+    for(const item of LOOP_DESTINATIONS){
+        if(item.subwayId === raw.subwayId && item.bstatnNm === raw.bstatnNm) {
+            return false;
+        }
+    }
+    if(raw.bstatnId === raw.statnId) return true;
+    return false;
 }
 
 /**
@@ -98,14 +103,36 @@ function isTerminatingHere(raw: RawArrival): boolean {
  * '진입' 뒤 목록에서 사라지는 열차는 오류가 아니다. 여기선 할 일 없음 (고정 단계에서 그냥 빠짐)
  */
 export function toObservation(raw: RawArrival, now: number): ArrivalObservation | null {
-    // TODO(3-4 직접)
-    throw new Error("TODO 3-4: toObservation");
+    if(!(Number(raw.barvlDt) > 0)) return null;
+
+    const direction = toDirection(raw.updnLine);
+    if(direction === null) return null;
+
+    const observedAt = parseRecptnDt(raw.recptnDt);
+    if(Number.isNaN(observedAt)) return null;
+    if(now - observedAt > STALE_MS) return null;
+    if(observedAt - now > FUTURE_MS) return null;
+
+    if(isTerminatingHere(raw)) return null;
+
+    return {
+        trainNo: raw.btrainNo,
+        subwayId: raw.subwayId,
+        direction: direction,
+        destination: raw.bstatnNm,
+        label: raw.trainLineNm,
+        message: raw.arvlMsg2,
+        observedAt: observedAt,
+        remainingSec: Number(raw.barvlDt)
+    }
 }
 
 /** 전체 변환: 다른 호선 거르기 → toObservation → null 제거. now는 route가 Date.now()를 넘긴다 */
 export function toObservations(raws: RawArrival[], subwayId: string, now: number): ArrivalObservation[] {
-    // TODO(3-4 직접)
-    throw new Error("TODO 3-4: toObservations");
+    return raws
+    .filter(raw => raw.subwayId === subwayId)
+    .map(raw => toObservation(raw, now))
+    .filter((raw): raw is ArrivalObservation => raw !== null);
 }
 
 // ── 3-6 도착 시각 고정과 첫 관측 노선 보정 ─────────────────────────
