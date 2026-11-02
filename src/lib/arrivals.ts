@@ -165,6 +165,36 @@ export function trainKey(o: Pick<ArrivalObservation, "trainNo" | "direction">): 
  * prev는 바꾸지 않는다 (새 객체를 돌려준다)
  */
 export function anchorArrivals(prev: AnchorMap, obs: ArrivalObservation[]): { next: AnchorMap; arrivals: Arrival[] } {
-    // TODO(3-6 직접)
-    throw new Error("TODO 3-6: anchorArrivals");
+    const next: AnchorMap = {}; // 새 응답에 있는 열차만 담는다 → 응답에 없는 열차는 저절로 빠진다
+
+    for (const o of obs) {
+        const key = trainKey(o);
+        const before = prev[key];
+        const { observedAt, remainingSec, ...rest } = o; // Arrival에는 이 두 필드가 없다
+
+        let arrivalAt: number;
+        let basis: Arrival["basis"];
+        if (before && before.remainingSec === remainingSec) {
+            // 남은 초 그대로 (recptnDt만 바뀐 응답) → 처음 고정한 시각 유지
+            arrivalAt = before.arrival.arrivalAt;
+            basis = before.arrival.basis;
+        } else if (before) {
+            // 남은 초가 바뀜 → 이 응답 기준으로 다시 고정
+            arrivalAt = observedAt + remainingSec * 1000;
+            basis = "changed";
+        } else {
+            // 처음 본 열차 → 노선 보정값을 뺀다 (표에 없는 노선은 0)
+            const offsetSec = LINE_OFFSET_SEC[o.subwayId] ?? 0;
+            arrivalAt = observedAt + (remainingSec - offsetSec) * 1000;
+            basis = "first-seen";
+        }
+
+        // 안내 문구(message 등)는 최신 응답 것으로, 시각만 규칙대로
+        next[key] = { remainingSec, arrival: { ...rest, arrivalAt, basis } };
+    }
+
+    const arrivals = Object.values(next)
+        .map((entry) => entry.arrival)
+        .sort((a, b) => a.arrivalAt - b.arrivalAt);
+    return { next, arrivals };
 }
