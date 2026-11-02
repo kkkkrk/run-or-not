@@ -21,16 +21,26 @@ function okJson(observations: ArrivalObservation[]): Response {
 }
 
 export async function GET(request: NextRequest): Promise<Response> {
-    const id = request.nextUrl.searchParams.get("id");
+    const id = request.nextUrl.searchParams.get("id"); //역 id
+    if(id === null) return errorJson(404, "없는 역입니다.");
+    const station = getStation(id);
+    if(station === undefined) return errorJson(404, "없는 역입니다.");
+    let body:unknown;
+    try{
+        body = await fetchRealtimeArrivals(station.apiName);
+    } catch(error){
+        console.error("서울시 API 요청 실패: ", error instanceof Error ? error.message : error);
+        return errorJson(502, "도착 정보를 가져오지 못했어요");
+    }
 
-    // TODO(3-5 직접)
-    // 1) id → getStation(id). id가 없거나 역이 없으면 errorJson(404, …)
-    // 2) fetchRealtimeArrivals(station.apiName)을 try/catch로. 던지면(키 없음·네트워크·HTTP 오류) errorJson(502, …)
-    //    서버 로그에 원인을 남기려면 catch에서 console.error
-    // 3) const { code, message, list } = readArrivalResponse(body)
-    //    INFO-000 → okJson(toObservations(list, station.subwayId, Date.now()))
-    //    INFO-200 → okJson([])
-    //    그 외   → errorJson(502, …)
-    // (구현 전까지 import·도우미가 안 쓰였다는 eslint 경고가 뜬다. 다 쓰면 사라짐)
-    throw new Error("TODO 3-5: /api/arrivals");
+    const { code, message, list } = readArrivalResponse(body);
+        if(code === "INFO-200") return okJson([]);
+
+        if(code !== "INFO-000"){
+            console.error(`서울시 API 오류 ${code}: ${message}`);
+            return errorJson(502, "도착 정보를 가져오지 못했어요");
+        }
+        
+            return okJson(toObservations(list, station.subwayId, Date.now()));
+    
 }
