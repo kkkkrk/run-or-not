@@ -169,7 +169,7 @@ export function anchorArrivals(prev: AnchorMap, obs: ArrivalObservation[]): { ne
 
     for (const o of obs) {
         const key = trainKey(o);
-        const before = prev[key];
+        const before = prev[key]; 
         const { observedAt, remainingSec, ...rest } = o; // Arrival에는 이 두 필드가 없다
 
         let arrivalAt: number;

@@ -33,7 +33,7 @@ export function useGeolocation(): GeoState{
                     setGeo({status: 'denied'});
                 }
                 if(geo.status === "loading"){
-                    if(err.code === err.TIMEOUT){
+                    if(err.code === err.TIMEOUT){ 
                         setGeo({status: 'timeout'});
                     } else if(err.code === err.POSITION_UNAVAILABLE){
                         setGeo({status: 'unavailable'});

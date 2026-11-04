@@ -1,10 +1,12 @@
 // import Runner from "./Runner";
 // import { Card } from "@/components/ui/card";
+// import { Geolocation } from "@/hooks/use-geolocation";
 
-export default function Home() {
+export default function MainPage() {
   return (
     <div>
       메인 페이지
+      {/* {Geolocation()}; */}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
+
 // layout(서버 컴포넌트)은 Context Provider를 직접 쓸 수 없어서 이 파일로 따로 뺀다.
 // children은 서버에서 이미 그려진 채로 넘어오므로, 각 페이지는 서버 컴포넌트로 남는다.
 export function QueryProvider({ children }: { children: React.ReactNode }) {
