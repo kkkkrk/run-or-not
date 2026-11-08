@@ -1,4 +1,9 @@
-export function VerdictCard(){
+import { Verdict } from "@/lib/verdict"
+
+export function VerdictCard({verdict, now}:{
+    verdict: Verdict;
+    now: number;
+}){
     return (
         <div className="flex flex-col items-center">
             <h1 className="mb-4 text-6xl font-black text-[#10B981]">

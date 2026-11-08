@@ -5,7 +5,7 @@ export type Station = {
     subwayId: string;  // 서울시 응답의 호선 코드 (예: 1007)
     lineName: string;  // "7호선"
     lat: number;
-    lng: number;
+    lng: number; 
 };
 
 export type Direction = "up" | "down";
@@ -13,7 +13,7 @@ export type Direction = "up" | "down";
 export type ArrivalObservation = {
     trainNo: string; 
     subwayId: string; 
-    direction: Direction;
+    direction: Direction; 
     destination: string; 
     label: string; 
     message: string;
