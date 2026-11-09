@@ -111,6 +111,18 @@ describe("judge 열차 여러 대", () => {
         expect(v.later.map((t) => t.arrival.trainNo)).toEqual(["C"]);
     });
 
+    it("첫 열차부터 탈 수 있으면 첫째가 main, missed는 비고 나머지는 later (정렬)", () => {
+        const v = judge(
+            [train("C", 700), train("B", 390), train("D", 500)],
+            NOW, WALK, S,
+        );
+        if (v.kind !== "walk" && v.kind !== "run") throw new Error(`kind: ${v.kind}`);
+        expect(v.kind).toBe("walk");
+        expect(v.main.arrival.trainNo).toBe("B");
+        expect(v.missed).toEqual([]);
+        expect(v.later.map((t) => t.arrival.trainNo)).toEqual(["D", "C"]);
+    });
+
     it("전부 miss → keep-walking, platformAt = now + 360 × 1000", () => {
         const v = judge([train("A", 50), train("B", 150)], NOW, WALK, S);
         expect(v.kind).toBe("keep-walking");
