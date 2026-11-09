@@ -10,6 +10,7 @@ import { StationSkeleton } from "./station-skeleton"
 import { VerdictCard } from "./verdict-card"
 import { ArrivalList } from "./arrival-list"
 import { ManualWalkInput } from "./manual-walk-input"
+import { DirectionToggle, changeDirection } from "@/components/station/direction-toggle"
 import { Station } from "@/types/subway"
 import { useNow } from "@/hooks/use-now"
 import { useHydrated } from "@/hooks/use-hydrated"
@@ -121,7 +122,7 @@ export function StationView({
         }
         return (
             <div className="min-h-screen flex flex-col">
-                <StationHeader stationName = {station.name} lineName={station.lineName}/>
+                <StationHeader stationName = {station.name} lineName={station.lineName} subwayId={station.subwayId} dir={dir}/>
                 <main className="flex flex-1 items-center justify-center">{message}</main>
             </div>
         )
@@ -166,6 +167,15 @@ export function StationView({
                     </p>
                 )}
                 <VerdictCard verdict = {verdict}/>
+                {verdict.kind === "empty" && (
+                    // #8 이 방향 열차 0대 → 반대 방향으로 바로 넘어가게
+                    <Button
+                        className="h-11 px-5 text-base"
+                        onClick={() => changeDirection(dir === "up" ? "down" : "up")}
+                    >
+                        반대 방향 보기
+                    </Button>
+                )}
                 <button
                     type="button"
                     className="px-3 py-2 text-sm text-slate-500"
@@ -179,7 +189,10 @@ export function StationView({
 
     return(
         <div className="min-h-screen flex flex-col justify-between ">
-            <StationHeader stationName = {station.name} lineName={station.lineName}/>
+            <StationHeader stationName = {station.name} lineName={station.lineName} subwayId={station.subwayId} dir={dir}/>
+            <div className="mt-3 flex justify-center">
+                <DirectionToggle subwayId={station.subwayId} dir={dir} />
+            </div>
             <main className="flex flex-col flex-1 justify-between items-center mt-4">
                 {center}
                 <div className="w-90">

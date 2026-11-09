@@ -1,12 +1,18 @@
 import { Button } from "@/components/ui/button"
-import { ChevronRight ,Settings } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import { getLineColor } from "@/lib/line-color";
+import { getDirectionLabel } from "@/components/station/direction-toggle";
+import type { Direction } from "@/types/subway";
 export function StationHeader({
-    stationName, 
-    lineName
+    stationName,
+    lineName,
+    subwayId,
+    dir,
 }:{
     stationName: string;
     lineName:string;
+    subwayId: string;
+    dir: Direction;
 }) {
     const lineColor = getLineColor(lineName)
     return (
@@ -23,12 +29,11 @@ export function StationHeader({
                     </span>
                     <p className="flex items-baseline gap-2">
                         <strong className="text-xl text-slate-800">{stationName}</strong>
-                        <span className="text-slate-500">석남방면</span>
+                        <span className="text-slate-500">{getDirectionLabel(subwayId, dir)}</span>
                     </p>
                 </div>
-                <Button variant="outline" size="icon" className="
-                h-14 w-14 rounded-full border-2 bg-white text-slate-900 hover:bg-slate-100
-                "><Settings className="size-5"/></Button>
+                {/* 설정 버튼 자리. 설정 화면은 MVP 밖이라 숨기고, 역 이름이 가운데에 오도록 뒤로 버튼과 같은 크기의 빈 칸을 둔다 */}
+                <div className="h-14 w-14 shrink-0" />
             </nav>
     )
 }
