@@ -58,7 +58,7 @@ export function StationView({
                     <Runner state="rest" color={"#10B981"} />
                 </div>
             </main>
-            <ArrivalList/>
+            <ArrivalList verdict={verdict} now={now} />
         </div>
     )
 }

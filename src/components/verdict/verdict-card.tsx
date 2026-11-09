@@ -2,7 +2,7 @@ import { Verdict } from "@/lib/verdict"
 
 // 남은 초 → 「N분 N초」. 올림/내림 규칙은 여기 한 곳에서만 정한다.
 // 내림: 실제보다 길게 보여 주면 놓칠 수 있으니 짧은 쪽으로 보여 준다.
-function formatRemaining(remainingSec: number): string {
+export function formatRemaining(remainingSec: number): string {
     const total = Math.max(0, Math.floor(remainingSec));
     const min = Math.floor(total / 60);
     const sec = total % 60;
