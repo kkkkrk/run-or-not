@@ -19,5 +19,7 @@ export function useArrivals(stationId: string): UseQueryResult<Anchored, Error> 
             return anchorArrivals(prev, obs);
         },
         refetchInterval: 20_000,
+        retry: 1,           // 기본 3회면 실패 화면이 늦게 뜸. 일시적 오류 한 번만 다시 시도
+        staleTime: 10_000,  // 화면 복귀·재마운트 때 10초 안에 받은 데이터면 다시 요청하지 않음
     });
 }
