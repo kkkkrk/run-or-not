@@ -10,9 +10,23 @@ import { useSettingsStore } from "@/stores/settings-store"
 import { useSearchParams } from "next/navigation"
 import { useArrivals } from "@/hooks/use-arrivals"
 import { useShallow } from "zustand/shallow"
-import { judge, WalkInput } from "@/lib/verdict"
+import { judge, Verdict, WalkInput } from "@/lib/verdict"
+import type { RunnerState } from "@/components/runner/runnerMotion"
 
 const TEMP_WALK: WalkInput = {walkSec: 300}
+
+// 판정 → 캐릭터 동작
+function toRunnerState(kind: Verdict["kind"]): RunnerState {
+    switch (kind) {
+        case "walk":
+        case "keep-walking":
+            return "walk";
+        case "run":
+            return "run";
+        case "empty":
+            return "idle";
+    }
+}
 
 export function StationView({ 
     station,
@@ -55,7 +69,7 @@ export function StationView({
             <main className="flex flex-col flex-1 justify-between items-center mt-4">
                 <VerdictCard verdict = {verdict}/>
                 <div className="w-90">
-                    <Runner state="rest" color={"#10B981"} />
+                    <Runner state={toRunnerState(verdict.kind)}color={"#10B981"} />
                 </div>
             </main>
             <ArrivalList verdict={verdict} now={now} />
