@@ -1,5 +1,6 @@
 'use client'
-import { useState, type ReactNode } from "react"
+import { useState, useSyncExternalStore, type ReactNode } from "react"
+import { onlineManager } from "@tanstack/react-query"
 import Link from "next/link"
 import Runner from "@/components/runner/Runner"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -80,6 +81,9 @@ export function StationView({
     const [editingWalk, setEditingWalk] = useState(false);
 
     const query = useArrivals(station.id);
+    // 오프라인 여부. fetchStatus "paused"는 숨은 탭에서 재시도를 기다릴 때도 되므로 쓰지 않고,
+    // TanStack Query가 요청을 멈출지 정할 때 보는 onlineManager를 직접 구독한다 (서버 렌더에서는 온라인으로 본다)
+    const online = useSyncExternalStore(onlineManager.subscribe, () => onlineManager.isOnline(), () => true);
     // persist 스토어(skipHydration) 복원 전에는 기본값으로 판정하지 않도록 로딩 유지.
     // 입력 UI도 이 뒤에 그리므로 복원 전 빈 칸이 잠깐 보였다 바뀌지 않는다
     const hydrated = useHydrated();
@@ -126,8 +130,6 @@ export function StationView({
     // ── 받은 데이터가 있을 때 (#5~#8) ──
     // dataUpdatedAt은 마지막 「성공」 응답 시각이라 재요청이 실패해도 안 바뀐다
     const elapsedSec = (now - query.dataUpdatedAt) / 1000;
-    // 오프라인이면 재요청이 보내지지 않고 paused로 멈춰 있다
-    const offline = query.fetchStatus === "paused";
     const arrivals = query.data.arrivals.filter(
         (arrival) => arrival.direction === dir
     );
@@ -160,7 +162,7 @@ export function StationView({
                 {elapsedSec > STALE_NOTICE_SEC && (
                     // #6 판정은 유지하고 작은 안내만
                     <p className="mb-2 rounded-full bg-amber-50 px-3 py-1 text-sm text-amber-700">
-                        {offline && "오프라인이에요 · "}최신 정보를 못 받았어요 · {Math.floor(elapsedSec)}초 전 기준
+                        {!online && "오프라인이에요 · "}최신 정보를 못 받았어요 · {Math.floor(elapsedSec)}초 전 기준
                     </p>
                 )}
                 <VerdictCard verdict = {verdict}/>
