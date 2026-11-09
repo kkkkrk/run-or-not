@@ -17,8 +17,7 @@ export default async function StationPage({params}: PageProps<"/station/[id]">){
     const {id} = await params;
     const station = getStation(id);
     if(station === undefined) {
-        throw new Error("test")
-        // notFound();
+        notFound();
     }
     return(
         <StationView station={station}/>

@@ -5,6 +5,7 @@ import { VerdictCard } from "./verdict-card"
 import { ArrivalList } from "./arrival-list"
 import { Station } from "@/types/subway"
 import { useNow } from "@/hooks/use-now"
+import { useHydrated } from "@/hooks/use-hydrated"
 import { useSettingsStore } from "@/stores/settings-store"
 import { useSearchParams } from "next/navigation"
 import { useArrivals } from "@/hooks/use-arrivals"
@@ -32,8 +33,10 @@ export function StationView({
     : "up";
 
     const query = useArrivals(station.id);
-    
-    if(now === null || query.isPending){
+    // persist 스토어(skipHydration) 복원 전에는 기본값으로 판정하지 않도록 로딩 유지
+    const hydrated = useHydrated();
+
+    if(!hydrated || now === null || query.isPending){
         // return <StationSkeleton />
         return <h3>로딩중</h3>
     }
