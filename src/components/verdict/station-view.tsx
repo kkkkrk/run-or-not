@@ -53,7 +53,7 @@ export function StationView({
         <div className="min-h-screen flex flex-col justify-between ">
             <StationHeader stationName = {station.name} lineName={station.lineName}/>
             <main className="flex flex-col flex-1 justify-between items-center mt-4">
-                <VerdictCard verdict = {verdict} now={now}/>
+                <VerdictCard verdict = {verdict}/>
                 <div className="w-90">
                     <Runner state="rest" color={"#10B981"} />
                 </div>
