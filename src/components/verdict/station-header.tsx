@@ -1,5 +1,7 @@
-import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { buttonVariants } from "@/components/ui/button"
 import { ChevronRight } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { getLineColor } from "@/lib/line-color";
 import { getDirectionLabel } from "@/components/station/direction-toggle";
 import type { Direction } from "@/types/subway";
@@ -17,9 +19,16 @@ export function StationHeader({
     const lineColor = getLineColor(lineName)
     return (
         <nav className="h-14 flex justify-between">
-                <Button variant="outline" size="icon" className="
-                h-14 w-14 rounded-full border-2 bg-white text-slate-900 hover:bg-slate-100 rotate-180
-                "><ChevronRight className="size-6"/></Button>
+                {/* 뒤로: 방문 기록(history.back)이 아니라 메인("/")으로. 주소로 바로 들어와도 검색으로 간다.
+                    이동은 링크라 <a>로 두고, 모양만 buttonVariants로 기존 버튼과 같게 */}
+                <Link
+                    href="/"
+                    aria-label="역 검색으로"
+                    className={cn(
+                        buttonVariants({ variant: "outline", size: "icon" }),
+                        "h-14 w-14 rounded-full border-2 bg-white text-slate-900 hover:bg-slate-100 rotate-180"
+                    )}
+                ><ChevronRight className="size-6"/></Link>
                 <div className="flex item-center justify-center gap-3 bg-white border-[3px] border-gray-200 rounded-full px-5 py-2.5 w-fit">
                     <span 
                         className="flex items-center justify-center h-8 w-8 rounded-full text-lg font-bold text-white"

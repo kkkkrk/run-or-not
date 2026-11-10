@@ -1,16 +1,12 @@
-// import Runner from "./Runner";
-// import { Card } from "@/components/ui/card";
-// import { Geolocation } from "@/hooks/use-geolocation";
+import { StationSearch } from "@/components/station/station-search";
 
+// 서버 컴포넌트로 두고, 입력·키보드가 필요한 검색만 StationSearch('use client')로 나눈다.
+// 그래서 이 페이지는 빌드 때 정적 HTML(○)로 만들어진다
 export default function MainPage() {
   return (
-    <div>
-      메인 페이지
-      {/* {Geolocation()}; */}
-    </div>
+    <main className="flex flex-col gap-8 px-4 pt-16 pb-8">
+      <h1 className="text-center text-4xl font-bold text-slate-800">뛸까말까</h1>
+      <StationSearch />
+    </main>
   );
 }
-
-{/* <div style={{width: 200}}>
-  <Runner state="rest" color="yellow" />
-</div> */}
