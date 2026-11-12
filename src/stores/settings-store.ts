@@ -23,6 +23,6 @@ export const useSettingsStore = create<SettingsState>()(
             update: (patch) => set(patch),
             reset: () => set(DEFAULT_SETTINGS),
         }),
-        { name: "ron-settings", skipHydration: true }, // 복원(rehydrate)은 5-4 use-hydrated에서
+        { name: "ron-settings", skipHydration: true }, // 복원(rehydrate)은 use-hydrated에서
     ),
 );
