@@ -100,6 +100,7 @@ export type PlatformTimeRowProps = {
     walkSec: number;                // 걸으면 (초). UI가 10초 단위로 반올림해 「3분20초」로 쓴다
     runSec: number;                 // 뛰면 (초)
     onPress: () => void;            // 줄을 눌렀을 때 → 페이지가 같은 화면의 sheet.open을 true로 바꾼다
+    sheetOpen: boolean;             // 그 시트가 열려 있는지 = 같은 화면의 sheet.open과 같은 값. 버튼의 aria-expanded로만 쓰고 모양은 안 바뀐다
 } & (
     {source: "manual"} // 직접 고른 값 → 어림일 수 없음
     | {source: "location"; approximate: boolean} // 내 위치로 계산 중 → 앞에 위치 화살표
@@ -154,12 +155,15 @@ export type VerdictScreenProps = {
 export type SheetLocation =
     | { status: "hidden" }                                      // 줄을 그리지 않는다 (위치 기능을 붙이기 전)
     | { status: "idle"; failed: boolean }                       // 「내 위치로 계산하기」 버튼
-    | { status: "locating" }                                    // 「내 위치 확인 중…」
+    | { status: "locating"; source: "manual" | "location" }     // 「내 위치 확인 중…」. source = 누르기 전 값이 어디서 왔나 (아래)
     | { status: "active"; distanceM: number; failed: boolean }  // 검정 면 「내 위치로 계산 중 · 150m」. 다시 누르면 새로 계산
     | { status: "denied" }                                      // 거부 → 버튼 대신 「브라우저 설정에서 위치를 허용하면 알아서 계산해요」
     | { status: "unsupported" };                                // 미지원 → 버튼 대신 「이 브라우저에서는 위치를 쓸 수 없어요」
 // failed = 방금 위치를 못 찾았다(시간 초과 · 사용 불가). 버튼 모양은 그대로 두고 그 아래에 「위치를 찾지 못했어요. 다시 누르거나 직접 골라 주세요」 한 줄.
 // 언제 true인지는 로직이 정한다: 다시 계산을 시작하거나, ± · 칩을 누르거나, 시트를 닫으면 false (결정.md 1절)
+// source = 확인하는 동안 시트에 보이는 값(walkSec)은 누르기 전 값 그대로다. 그 값이 직접 고른 값이면 "manual" → 고른 칩을 칠한 채로 둔다.
+// 검정 버튼을 다시 눌러 새로 계산하는 중이면 "location" → 칠한 칩이 없다. 같은 화면 PlatformTimeRowProps의 source와 같은 값이다.
+// 다른 상태는 status만으로 안다: "active"만 내 위치로 계산한 값이고 나머지는 직접 고른 값 (시안 v32 「승강장까지」 시트)
 
 /** 「승강장까지」 시트 — 「승강장까지」 줄을 누르면 아래에서 올라오는 흰 시트. 화면 props의 sheet로 받는다 (결정.md 1절) */
 export type PlatformTimeSheetProps = {
@@ -172,7 +176,8 @@ export type PlatformTimeSheetProps = {
     onDecrease: () => void;   // − 30초. 다음 값 계산은 로직
     onIncrease: () => void;   // + 30초
     onSelectChip: (sec: number) => void;  // 칩 3 · 5 · 7 · 10분 → 180 · 300 · 420 · 600.
-                                          // 검정으로 칠할 칩은 UI가 고른다: walkSec와 같은 칩 (내 위치로 계산 중이면 없음)
+                                          // 검정으로 칠할 칩은 UI가 고른다: walkSec와 같은 칩. 지금 값이 내 위치로 계산한 값이면 없다
+                                          // (location이 "active"이거나, "locating"이면서 source가 "location"일 때)
     location: SheetLocation;
     onUseLocation: () => void;  // 위치 줄 버튼을 눌렀을 때 (계산 시작 · 다시 계산)
 };
