@@ -21,6 +21,9 @@ export type Verdict =
     | { kind: "slow" | "walk" | "run" | "tight"; main: TrainVerdict; missed: TrainVerdict[]; later: TrainVerdict[] }
     | { kind: "keep-walking"; trains: TrainVerdict[]; platformAt: number }; // 일단 걸어가요
 
+const TIGHT_SEC = 20;
+const SLOW_SEC = 20;
+
 function ceilSec(input: number): number{
     return Math.ceil(input - 1e-9);
 }
@@ -43,13 +46,11 @@ export function judgeTrain(
 {
     let kind:"slow" | "walk" | "run" | "miss" | "tight";
     const remainingSec = (arrival.arrivalAt - now) / 1000;
-    if(remainingSec>= need.walk + 180){
-        kind = "slow";
-    } else if(remainingSec>= need.walk + s.marginSec){
-        kind = "walk";
-    } else if(remainingSec >= need.run + 20){
+    if(remainingSec>= need.walk + s.marginSec){
+        kind = remainingSec >= need.walk + SLOW_SEC ? "slow" : "walk";
+    } else if(remainingSec >= need.run + TIGHT_SEC){
         kind = "run";
-    } else if(remainingSec >= need.run - 20){
+    } else if(remainingSec >= need.run - TIGHT_SEC){
         kind = "tight";
     }else{
         kind = "miss";
@@ -66,43 +67,45 @@ export function judge(
     arrivals: Arrival[],
     now: number,
     input: WalkInput,
-    s:VerdictSettings):Verdict
+    s: VerdictSettings): Verdict
 {
-    if(!arrivals.length) return { kind: "empty" };
     const need = needSeconds(input, s);
-    
+
     const arrivalList = arrivals
-        .map(arrival => judgeTrain(arrival, now, need,s))
-        .sort((a,b) => a.remainingSec - b.remainingSec);
-    
-    const missed:TrainVerdict[] = [];
-    const later:TrainVerdict[] = [];
-    let main:TrainVerdict | undefined;
+        .map(arrival => judgeTrain(arrival, now, need, s))
+        .filter(train => train.remainingSec > 0) // 이미 도착한 열차(남은 시간 0 이하)는 없는 열차로 친다
+        .sort((a, b) => a.remainingSec - b.remainingSec);
 
+    // 지난 열차를 뺀 뒤에 0대인지 센다
+    if (!arrivalList.length) return { kind: "empty" };
 
-    for(const arrival of arrivalList){
-        if(main === undefined && arrival.kind !== "miss"){
+    const missed: TrainVerdict[] = [];
+    const later: TrainVerdict[] = [];
+    let main: TrainVerdict | undefined;
+
+    for (const arrival of arrivalList) {
+        if (main === undefined && arrival.kind !== "miss") {
             main = arrival;
         }
-        if(main === undefined){
+        if (main === undefined) {
             missed.push(arrival);
         }
-        else if(arrival !== main){
+        else if (arrival !== main) {
             later.push(arrival);
         }
     }
-    if(main === undefined){
-        return { 
+    if (main === undefined) {
+        return {
             kind: "keep-walking",
             trains: arrivalList,
-            platformAt: now + need.walk * 1000 //지금부터 걸어갔을 때 도착 예상 시각
+            platformAt: now + need.walk * 1000 // 지금부터 걸어갔을 때 도착 예상 시각
         };
-    } else{
+    } else {
         return {
             kind: main.kind as "slow" | "walk" | "run" | "tight",
             main,
             missed,
             later
-        }
+        };
     }
 }

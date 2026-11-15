@@ -5,13 +5,17 @@ import { formatRemaining } from "./verdict-card"
 type RowStyle = "missed" | "main" | "normal";
 
 const KIND_LABEL: Record<TrainVerdict["kind"], string> = {
+    slow: "천천히 걸어요",
     walk: "걸어도 돼요",
-    run: "뛰면 타요",
-    miss: "못 타요",
+    run: "지금 뛰어요!",
+    tight: "빨리 뛰어봐요!",
+    miss: "탈 열차가 아직 안 보여요",
 };
 const KIND_COLOR: Record<TrainVerdict["kind"], string> = {
+    slow: "text-[#10B981]",  // L3 전까지 walk처럼
     walk: "text-[#10B981]",
     run: "text-red-500",
+    tight: "text-red-500",   // L3 전까지 run처럼
     miss: "text-slate-400",
 };
 const ROW_CLASS: Record<RowStyle, string> = {
@@ -27,8 +31,10 @@ export function ArrivalList({ verdict, now }: {
     let rows: { train: TrainVerdict; style: RowStyle }[];
 
     switch (verdict.kind) {
+        case "slow":
         case "walk":
         case "run":
+        case "tight":
             rows = [
                 ...verdict.missed.map((train) => ({ train, style: "missed" as const })),
                 { train: verdict.main, style: "main" as const },

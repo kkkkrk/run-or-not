@@ -17,11 +17,13 @@ export function VerdictCard({verdict}:{
     let message: string;
 
     switch (verdict.kind) {
+        case "slow":
         case "walk":
             title = "걸어가요";
             titleColor = "text-[#10B981]";
             message = `다음 열차 ${formatRemaining(verdict.main.remainingSec)} 남아요`;
             break;
+        case "tight":
         case "run":
             title = "뛰어요";
             titleColor = "text-red-500";

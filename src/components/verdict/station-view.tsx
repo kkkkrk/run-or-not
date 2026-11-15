@@ -30,9 +30,11 @@ const STALE_HOLD_SEC = 120;   // 6번 놓치면 판정 보류
 function toRunnerState(kind: Verdict["kind"]): RunnerState {
     switch (kind) {
         case "walk":
+        case "slow":
         case "keep-walking":
             return "walk";
         case "run":
+        case "tight":
             return "run";
         case "empty":
             return "idle";

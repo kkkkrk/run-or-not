@@ -76,7 +76,6 @@ describe("2~4. 경계값", () => {
 // ── 5~7. 열차 여러 대 ───────────────────────────────────────
 
 describe("5~7. 열차 여러 대", () => {
-    // 새로 짤 것. miss는 159 이하, tight는 160~199
     it("첫 열차 miss + 둘째 tight → tight, missed 1대, 그 뒤는 later", () => {
         const v = judge([train(159, "A"), train(160, "B")], now, input, settings);
         expect(v.kind).toBe("tight");
