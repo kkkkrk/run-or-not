@@ -85,6 +85,7 @@
 
   /* 5) 글자 단계 — 작은 글자 (시안 v32 CSS 3 ~ 12절에서 실제로 쓰는 크기). 크기만 있고 이름이 곧 px다:
         text-12 · text-12.5 · text-13 … (12.5 같은 소수는 변수 이름에서만 점 대신 _) */
+  --text-10: 10px;        /* 호선 배지의 「우이」 (결정.md 1절 — U2에서 더함) */
   --text-12: 12px;        /* 「승강장까지」 · 「또는 직접 고르기」 */
   --text-12_5: 12.5px;    /* 열차 이름 · 「뛰어도 N 부족」 · 새로고침 글자 · 걸으면 · 뛰면 · 안내 한 줄 */
   --text-13: 13px;        /* 시트 설명 · 「뛰면 N · 자동 계산」 · 처음 값으로 · 다른 역 찾기 */
@@ -102,6 +103,11 @@
   --tracking-body: -0.015em;       /* 화면 기본 자간 */
   --tracking-num: -0.03em;         /* 숫자 (tabular-nums와 같이 쓴다) */
   --leading-body: 1.4;             /* 화면 기본 줄 높이 */
+
+  /* 7) 움직임 — 캐릭터 말고 움직이는 것은 새로고침 아이콘 하나다 (결정.md 4절 「새로고침」, 시안 v32 CSS 7절 .rf-spin — U2에서 더함).
+        animate-refresh-spin: 받는 동안 0.7초에 한 바퀴씩 계속 돈다 */
+  --animate-refresh-spin: refresh-spin 0.7s linear infinite;
+  @keyframes refresh-spin { to { transform: rotate(360deg); } }
 }
 
 
