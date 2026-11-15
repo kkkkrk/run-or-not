@@ -1,0 +1,191 @@
+/*
+ * 가운데 캐릭터 · 열차 줄 아이콘 — 모양과 움직임 (plan.md U1)
+ * 기준: design/결정.md 3절, design/v32.html CSS 13 · 14절. 각도 · 길이 · 시간은 v32 값 그대로다.
+ *
+ * 클래스
+ *   .figure      사람 그림 공통 — 캐릭터와 아이콘이 같이 쓴다 (v32 .runner)
+ *   .character   가운데 캐릭터 — 흐르는 바닥 점선 · 뛸 때 두 줄
+ *   .icon        열차 줄 아이콘 — 멈춘 바닥선 · 뛸 때 두 줄 (v32 svg.pic). .slot은 아이콘이 놓이는 자리
+ *   자세         .stand · .walk · .slow · .run · .tight · .phone · .miss
+ *                ui.ts의 CharacterPose · TrainKind와 같은 이름이라 tsx에서 styles[pose]로 바로 고른다
+ *
+ * 움직이는 방식
+ *   person.tsx의 관절마다 <g data-part="…">가 있고, 여기서 그 <g>를 돌린다 (0° = 아래로, 음수 = 앞쪽으로).
+ *   한 바퀴 시간은 --cycle 하나다. 걷기(walk · slow)끼리, 뛰기(run · tight)끼리는 동작이 같고 --cycle만 다르다.
+ *   반대쪽 팔다리는 같은 동작을 반 바퀴 먼저 시작한 것처럼 돌린다 (animation-delay = --cycle × −0.5).
+ *
+ * 바깥에서 받는 것 — 화면 틀(U2)이 줄 값이다. 미리보기는 직접 준다
+ *   --screen-bg           캐릭터 뒤 화면 바탕색. 뒤쪽 팔다리 색에 섞는다 (v32 --scr-bg)
+ *   [data-tone="white"]   조상에 붙는 「흰 화면」 표시 → 캐릭터가 회색이 된다 (v32 .th-light, ui.ts ScreenTone "white")
+ */
+
+/* ───────────────────────── 1. 사람 그림 공통 ───────────────────────── */
+
+.figure {
+  --c: #fff;                                                               /* 사람 색 */
+  --cb: color-mix(in srgb, var(--c) 45%, var(--screen-bg, transparent));   /* 뒤쪽 팔다리 = 사람 색 45% + 바탕색 */
+  overflow: visible;
+  color: var(--c);
+}
+.limb { fill: none; stroke: currentColor; stroke-width: 11; stroke-linecap: round; }
+.torso { stroke-width: 12; }
+.head { fill: currentColor; }
+.back { color: var(--cb); }
+
+/* 관절: 돌리는 중심을 그 <g>의 원점(= 관절 자리)으로 둔다 */
+.figure [data-part] { transform-box: view-box; transform-origin: 0 0; }
+
+/* ───────────────────────── 2. 한 바퀴 시간 (결정.md 3절) ───────────────────────── */
+
+.walk  { --cycle: 1000ms; }   /* 걸어요 */
+.slow  { --cycle: 1450ms; }   /* 천천히 걸어요 */
+.run   { --cycle: 580ms; }    /* 뛰어요 */
+.tight { --cycle: 430ms; }    /* 아슬아슬 */
+
+/* ───────────────────────── 3. 자세 · 움직임 ───────────────────────── */
+
+/* 걷기 — walk · slow */
+@keyframes walk-bob   { 0%, 50%, 100% { transform: translateY(5.5px); } 25%, 75% { transform: translateY(0.2px); } }
+@keyframes walk-thigh { 0%, 100% { transform: rotate(-24deg); } 50% { transform: rotate(24deg); } }
+@keyframes walk-shin  { 0%, 100% { transform: rotate(6deg); } 50% { transform: rotate(22deg); } 75% { transform: rotate(40deg); } }
+@keyframes walk-upper { 0%, 100% { transform: rotate(-20deg); } 50% { transform: rotate(20deg); } }
+@keyframes walk-lower { 0%, 100% { transform: rotate(-24deg); } 50% { transform: rotate(-8deg); } }
+
+.walk, .slow {
+  & [data-part="bob"]        { animation: walk-bob var(--cycle) ease-in-out infinite; }
+  & [data-part="lean"]       { transform: rotate(3deg); }
+  & [data-part="legF-thigh"] { animation: walk-thigh var(--cycle) ease-in-out infinite; }
+  & [data-part="legF-shin"]  { animation: walk-shin var(--cycle) ease-in-out infinite; }
+  & [data-part="legB-thigh"] { animation: walk-thigh var(--cycle) ease-in-out calc(var(--cycle) * -0.5) infinite; }
+  & [data-part="legB-shin"]  { animation: walk-shin var(--cycle) ease-in-out calc(var(--cycle) * -0.5) infinite; }
+  & [data-part="armF-upper"] { animation: walk-upper var(--cycle) ease-in-out calc(var(--cycle) * -0.5) infinite; }
+  & [data-part="armF-lower"] { animation: walk-lower var(--cycle) ease-in-out calc(var(--cycle) * -0.5) infinite; }
+  & [data-part="armB-upper"] { animation: walk-upper var(--cycle) ease-in-out infinite; }
+  & [data-part="armB-lower"] { animation: walk-lower var(--cycle) ease-in-out infinite; }
+  & [data-part="ground"]     { animation: ground calc(var(--cycle) * 0.32) linear infinite; }
+}
+
+/* 뛰기 — run · tight */
+@keyframes run-bob   { 0%, 50%, 100% { transform: translateY(6px); } 25%, 75% { transform: translateY(9px); } 37.5%, 87.5% { transform: translateY(1px); } }
+@keyframes run-lean  { 0%, 50%, 100% { transform: rotate(13deg); } 25%, 75% { transform: rotate(14deg); } }
+@keyframes run-thigh { 0%, 100% { transform: rotate(-30deg); } 37.5% { transform: rotate(34deg); } 87.5% { transform: rotate(-50deg); } }
+@keyframes run-shin  { 0%, 100% { transform: rotate(18deg); } 62.5% { transform: rotate(112deg); } }
+@keyframes run-upper { 0%, 100% { transform: rotate(-56deg); } 50% { transform: rotate(40deg); } }
+@keyframes run-lower { 0%, 100% { transform: rotate(-96deg); } 50% { transform: rotate(-56deg); } }
+
+.run, .tight {
+  & [data-part="bob"]        { animation: run-bob var(--cycle) ease-in-out infinite; }
+  & [data-part="lean"]       { animation: run-lean var(--cycle) ease-in-out infinite; }
+  & [data-part="legF-thigh"] { animation: run-thigh var(--cycle) ease-in-out infinite; }
+  & [data-part="legF-shin"]  { animation: run-shin var(--cycle) ease-in-out infinite; }
+  & [data-part="legB-thigh"] { animation: run-thigh var(--cycle) ease-in-out calc(var(--cycle) * -0.5) infinite; }
+  & [data-part="legB-shin"]  { animation: run-shin var(--cycle) ease-in-out calc(var(--cycle) * -0.5) infinite; }
+  & [data-part="armF-upper"] { animation: run-upper var(--cycle) ease-in-out calc(var(--cycle) * -0.5) infinite; }
+  & [data-part="armF-lower"] { animation: run-lower var(--cycle) ease-in-out calc(var(--cycle) * -0.5) infinite; }
+  & [data-part="armB-upper"] { animation: run-upper var(--cycle) ease-in-out infinite; }
+  & [data-part="armB-lower"] { animation: run-lower var(--cycle) ease-in-out infinite; }
+  & [data-part="ground"]     { animation: ground calc(var(--cycle) * 0.2) linear infinite; }
+}
+
+/* 바닥 점선이 한 칸(38)만큼 뒤로 밀렸다가 처음으로 — 끊김 없이 흐른다 */
+@keyframes ground { from { transform: translateX(0); } to { transform: translateX(-38px); } }
+
+/* 서 있기 — 팔다리를 살짝 벌리고 선 자세. 움직이지 않는다 */
+.stand {
+  & [data-part="armF-upper"] { transform: rotate(-12deg); }
+  & [data-part="armB-upper"] { transform: rotate(12deg); }
+  & [data-part="legF-thigh"] { transform: rotate(-5deg); }
+  & [data-part="legB-thigh"] { transform: rotate(5deg); }
+}
+
+/* 서서 폰 보기 (결정.md 3절 관절 각도) — 고개를 숙이고 앞팔을 가슴 앞으로 굽힌다. 손에 폰은 그리지 않는다.
+   걷지 않고 숨 쉬듯 몸 전체만 1px쯤 오르내린다 (3초). 바닥은 흐르지 않는다 */
+@keyframes breathe { 0%, 100% { transform: translateY(5.5px); } 50% { transform: translateY(4.3px); } }
+
+.phone {
+  & [data-part="bob"]        { animation: breathe 3s ease-in-out infinite; }
+  & [data-part="lean"]       { transform: rotate(3deg); }
+  & [data-part="head"]       { transform: rotate(24deg); }
+  & [data-part="legF-thigh"] { transform: rotate(-6deg); }
+  & [data-part="legF-shin"]  { transform: rotate(3deg); }
+  & [data-part="legB-thigh"] { transform: rotate(5deg); }
+  & [data-part="armF-upper"] { transform: rotate(-30deg); }
+  & [data-part="armF-lower"] { transform: rotate(-95deg); }
+  & [data-part="armB-upper"] { transform: rotate(8deg); }
+  & [data-part="armB-lower"] { transform: rotate(-6deg); }
+}
+
+/* 못 타요 — 뒤로 손 짚고 앉아 한 손은 이마. 열차 줄 아이콘에만 쓴다.
+   bob의 이동은 엉덩이 · 발 · 손이 바닥선에 닿고 가로 가운데에 오게 맞춘 값이다 */
+.miss {
+  & [data-part="bob"]        { transform: translate(-4.6px, 65.8px); }
+  & [data-part="lean"]       { transform: rotate(-22deg); }
+  & [data-part="head"]       { transform: rotate(-18deg); }
+  & [data-part="legF-thigh"] { transform: rotate(-125deg); }
+  & [data-part="legF-shin"]  { transform: rotate(83deg); }
+  & [data-part="legB-thigh"] { transform: rotate(-118deg); }
+  & [data-part="legB-shin"]  { transform: rotate(68deg); }
+  & [data-part="armF-upper"] { transform: rotate(-126.6deg); }
+  & [data-part="armF-lower"] { transform: rotate(-91.9deg); }
+  & [data-part="armB-upper"] { transform: rotate(49.5deg); }
+  & [data-part="armB-lower"] { transform: rotate(6deg); }
+}
+
+/* ───────────────────────── 4. 가운데 캐릭터 ───────────────────────── */
+
+/* 크기는 부모(캐릭터 무대 — U2)의 높이를 그대로 따른다 */
+.character {
+  --ground: rgb(255 255 255 / 0.4);   /* 바닥 점선 색 */
+  display: block;
+  width: auto;
+  height: 100%;
+}
+.character.stand { --ground: rgb(255 255 255 / 0.28); }
+/* 흰 화면(승강장까지 몇 분? · 위치 확인 중): 회색 사람. 흰 화면에는 서 있는 자세만 오지만,
+   다른 자세가 와도 흰 바탕에 흰 사람이 되지 않게 자세를 가리지 않는다 */
+[data-tone="white"] .character { --c: #64748B; --ground: #CBD5E1; }
+
+/* 바닥: 점선은 tsx가 x 52~148만 보이게 가린다 (양끝 흐림) */
+.ground line { stroke: var(--ground); stroke-width: 6; stroke-linecap: round; }
+
+/* 뛸 때 두 줄: 몸 뒤에서 한 바퀴마다 뒤로 밀리며 흐려진다. 둘째 줄은 엇갈려 나온다 */
+.speed line {
+  stroke: rgb(255 255 255 / 0.75); stroke-width: 5; stroke-linecap: round;
+  opacity: 0;
+  animation: speed var(--cycle) linear infinite;
+}
+.speed line:nth-child(2) { animation-delay: calc(var(--cycle) * -0.35); }
+@keyframes speed { 0% { transform: translateX(14px); opacity: 0; } 25% { opacity: 1; } 100% { transform: translateX(-26px); opacity: 0; } }
+
+/* ───────────────────────── 5. 열차 줄 아이콘 ───────────────────────── */
+
+/* 아이콘 자리: 아이콘 폭이 자세마다 달라도 열차 줄의 아이콘 칸은 같은 폭(46px)으로 맞춘다 */
+.slot { display: flex; flex: none; align-items: center; justify-content: center; min-width: 46px; }
+
+/* 흰색 단색(뒤쪽 팔다리도 흰색) · 배경 없음. 판정 대상 열차는 크기로만 구분한다 */
+.icon { --c: #fff; --cb: #fff; display: block; width: auto; height: 28px; }
+.icon.target { height: 42px; }
+/* 못 타요: 앉은 자세라 키가 작아서 1.3배(36.4px)로 키우고 한 단계 흐리게.
+   못 타는 열차는 판정 대상이 될 수 없다. v32처럼 .target보다 뒤에 둬서 isTarget이 와도 늘 이 크기다 */
+.icon.miss { height: calc(28px * 1.3); opacity: 0.7; }
+
+/* 바닥선: 사람 아래 짧은 선 하나. 흐르지 않는다 */
+.floor { fill: none; stroke: #fff; stroke-width: 7; stroke-opacity: 0.55; stroke-linecap: round; }
+
+/* 뛸 때 두 줄: 가운데 캐릭터의 두 줄과 같은 자리 */
+.streak line {
+  fill: none; stroke: currentColor; stroke-width: 8; stroke-linecap: round;
+  opacity: 0;
+  animation: streak var(--cycle) linear infinite;
+}
+.streak line:nth-child(1) { animation-delay: calc(var(--cycle) * -0.2); }
+.streak line:nth-child(2) { animation-delay: calc(var(--cycle) * -0.7); }
+@keyframes streak { 0% { transform: translateX(14px); opacity: 0; } 20%, 72% { opacity: 1; } 100% { transform: translateX(-22px); opacity: 0; } }
+
+/* ───────────────────────── 6. 움직임 줄이기 ───────────────────────── */
+
+/* 움직임을 멈추고 그 자세로 서 있게 한다 (plan.md 7절).
+   animation: none으로 끄면 팔다리가 차렷 자세로 돌아가서, 끄지 않고 첫 장면에 세워 둔다 */
+@media (prefers-reduced-motion: reduce) {
+  .figure * { animation-play-state: paused !important; }
+}
