@@ -5,8 +5,8 @@ import type { VerdictSettings } from "@/lib/verdict";
 
 // 기본값은 여기 한 곳에만. 숫자는 초안 — 8단계에서 직접 걸어 보고 확정 (컨텍스트 12절)
 export const DEFAULT_SETTINGS: VerdictSettings = {
-  walkSpeed: 1.3,          // m/s
-  runSpeed: 3.0,           // m/s
+  walkSpeed: 4.5,          // km/h
+  runSpeed: 9.0,           // km/h
   stationOverheadSec: 60,  // 입구 → 승강장
   marginSec: 30,           // 걸어도 돼 여유
 };
