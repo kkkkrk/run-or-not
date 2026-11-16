@@ -3,6 +3,7 @@
  *
  * 실행 (레포 루트에서): npx tsx scripts/build-stations.ts
  * 원본: scripts/raw/station-master.json — 서울 열린데이터광장 「서울시 역사마스터 정보」
+ *       scripts/raw/neighbors.json — 실시간 도착 API(ALL) 응답 한 번에서 모은 역 · 방향별 trainLineNm (scripts/collect-neighbors.mts)
  *       출처 URL·받은 날짜는 scripts/raw/README.md
  *
  * 하는 일
@@ -13,13 +14,15 @@
  *   5. 판정할 수 없는 역을 뺀다
  *      - 노선 단위: 남은 시간(barvlDt)을 주지 않는 노선 (EXCLUDED_LINES)
  *      - 역 단위: 실시간 API가 데이터를 주지 않는 역 (EXCLUDED_STATIONS)
- *   6. id 순으로 정렬해 쓴다 → 다시 돌려도 결과가 같다
+ *   6. 남은 역마다 방향별 다음 역 이름(next)을 붙인다 — 역명판 양옆 칸 (neighbors.json + NEXT_OVERRIDES)
+ *   7. id 순으로 정렬해 쓴다 → 다시 돌려도 결과가 같다
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import type { Station } from "../src/types/subway"; // 별칭(@/) 말고 상대 경로
+import type { Direction, Station, StationWithNext } from "../src/types/subway"; // 별칭(@/) 말고 상대 경로
 
 const RAW_PATH = path.join(process.cwd(), "scripts/raw/station-master.json");
+const NEIGHBORS_PATH = path.join(process.cwd(), "scripts/raw/neighbors.json");
 const OUT_PATH = path.join(process.cwd(), "src/data/stations.json");
 
 // ── 원본 모양 ────────────────────────────────────────────────
@@ -31,6 +34,10 @@ type RawRow = {
     lot: string; //     경도
 };
 type RawFile = { DESCRIPTION: Record<string, string>; DATA: RawRow[] };
+
+// scripts/collect-neighbors.mts가 만든 파일. 키는 "API 역명-subwayId" ("공릉(서울산업대입구)-1007")
+// 값은 방향별 trainLineNm ("도봉산행 - 하계방면"). 받은 순간 그 방향 열차가 없었으면 빈 배열
+type RawNeighbors = Partial<Record<string, Record<Direction, string[]>>>;
 
 // ── 호선 → 서울시 API subwayId ───────────────────────────────
 // 1~9호선은 확실. 나머지는 3-1에서 실제 응답의 subwayId로 확인할 것
@@ -193,6 +200,29 @@ const EXCLUDED_STATIONS: readonly StationKey[] = [
     "구파발|3호선", "남태령|4호선", "사당|4호선", "총신대입구|4호선",
 ];
 
+// ── 다음 역 예외: "표시명|호선" → 방향별 다음 역 표시명 (null = 그 방향으로는 열차가 안 다닌다) ──
+// neighbors.json은 API 응답 한 번을 받은 것이라, 그 순간 열차가 없던 방향은 비어 있어 끝 역과 구분이 안 되고
+// API가 「○○방면」을 실제 다음 역과 다르게 주는 역도 있다 → 여기 적은 칸은 neighbors.json 대신 이 값을 쓴다
+// 여기 적은 칸은 사람이 확인한 칸으로 보고 빈칸 검사(findUnconfirmedEnds)에서 묻지 않는다
+type NextOverride = Partial<Record<Direction, string | null>>;
+const NEXT_OVERRIDES: Partial<Record<StationKey, NextOverride>> = {
+    // 받은 순간 그 방향 열차가 없어 비어 있던 칸 (끝 역이 아니다)
+    "까치산|2호선": { down: "신정네거리" }, // 신정지선 종점. 신도림 쪽으로 떠나는 열차
+    "불암산|4호선": { up: "별내별가람", down: "상계" }, // up은 「불암산행 - 불암산방면」으로 온다 (진접선은 API에 없음)
+    // API가 방면을 자기 역으로 준 칸 (끝 역이 아니다)
+    "종합운동장|9호선": { up: "삼전" }, // 「중앙보훈병원행 - 종합운동장방면 (급행)」
+    // 6호선 응암 순환: 응암 → 역촌 → 불광 → 독바위 → 연신내 → 구산 → 응암 → 새절, 한 방향으로만 돈다
+    // 응암: API는 up 「응암순환(상선)방면」(자기 역), down 「역촌방면」으로 주지만
+    //   up 열차는 새절 쪽에서 와서 역촌으로 들어가고, down 열차는 순환을 돌아 새절로 나간다
+    //   근거: 2026-11-16 응암 조회 (src/lib/__fixtures__/eungam-6.json — 상행은 새절 · 망원, 하행은 독바위에서 오는 중)
+    "응암|6호선": { up: "역촌", down: "새절" },
+    "역촌|6호선": { up: null },
+    "불광|6호선": { up: null },
+    "독바위|6호선": { up: null },
+    "연신내|6호선": { up: null },
+    "구산|6호선": { up: null },
+};
+
 // 한국 대략 범위. 위도·경도를 바꿔 넣은 행이나 빈 값을 잡는다
 const LAT_RANGE = [33, 39] as const;
 const LNG_RANGE = [124, 132] as const;
@@ -300,21 +330,118 @@ function excludeUnsupported(stations: Station[]): {
     return { kept, excluded, unmatchedKeys };
 }
 
+// ── 다음 역 (역명판 양옆 칸) ──────────────────────────────────
+
+const DIRECTIONS: readonly Direction[] = ["up", "down"];
+const OPPOSITE: Record<Direction, Direction> = { up: "down", down: "up" };
+
+/** "도봉산행 - 천왕방면" → "천왕", "용산행 - 오류동방면 (급행)" → "오류동". 모양이 다르면 null */
+function parseNextApiName(trainLineNm: string): string | null {
+    const match = /^.+행 - (.+)방면(?: \(.+\))?$/.exec(trainLineNm);
+    return match ? match[1] : null;
+}
+
+/** 이 역의 NEXT_OVERRIDES 줄. 없으면 빈 객체 */
+function overrideOf(s: Station): NextOverride {
+    const table: Partial<Record<string, NextOverride>> = NEXT_OVERRIDES; // Station.lineName이 string이라 키도 string으로
+    return table[keyOf(s)] ?? {};
+}
+
+/**
+ * 남은 역마다 방향별 다음 역 표시명(next)을 붙인다. 다음 역이 없으면 null (끝 역 · 한 방향 구간)
+ * all: 제외하기 전 역 전부 — 다음 역이 제외된 역(구파발 · 장암 …)이어도 이름은 보여야 해서 이름 찾기에 쓴다
+ */
+function addNext(
+    kept: Station[],
+    all: Station[],
+    neighbors: RawNeighbors,
+): { stations: StationWithNext[]; warnings: string[] } {
+    const warnings: string[] = [];
+
+    // 같은 호선 안에서 API 역명 → 표시명 ("서울|1004" → "서울역", "총신대입구(이수)|1007" → "이수")
+    // 제외한 역은 apiName을 맞춰 두지 않았으니 표시명으로도 찾을 수 있게 둘 다 넣는다
+    const displayNames = new Map<string, string>();
+    for (const s of all) {
+        displayNames.set(`${s.name}|${s.subwayId}`, s.name);
+        displayNames.set(`${s.apiName}|${s.subwayId}`, s.name);
+    }
+
+    const stations = kept.map((s): StationWithNext => {
+        const where = `${s.lineName} ${s.name}`;
+        const entry = neighbors[`${s.apiName}-${s.subwayId}`];
+        if (!entry) warnings.push(`neighbors.json에 없는 역: ${where} (키 ${s.apiName}-${s.subwayId})`);
+        const override = overrideOf(s);
+
+        const nextOf = (dir: Direction): string | null => {
+            const fixed = override[dir];
+            if (fixed !== undefined) {
+                if (fixed !== null && !displayNames.has(`${fixed}|${s.subwayId}`)) {
+                    warnings.push(`역 목록에 없는 NEXT_OVERRIDES 이름: ${where} ${dir} → ${fixed}`);
+                }
+                return fixed;
+            }
+            for (const trainLineNm of entry?.[dir] ?? []) {
+                const apiName = parseNextApiName(trainLineNm);
+                if (apiName === null) {
+                    warnings.push(`모양이 다른 trainLineNm: ${where} ${dir} 「${trainLineNm}」`);
+                    continue;
+                }
+                if (apiName === s.apiName) continue; // 방면이 자기 역 = 이 역에서 끝나는 쪽 (「오금행 - 오금방면」)
+                const name =
+                    displayNames.get(`${apiName}|${s.subwayId}`) ??
+                    displayNames.get(`${toDisplayName(apiName)}|${s.subwayId}`); // "총신대입구(이수)|1004" → "총신대입구"
+                if (name === undefined) warnings.push(`역 목록에 없는 다음 역: ${where} ${dir} → ${apiName}`);
+                return name ?? toDisplayName(apiName);
+            }
+            return null;
+        };
+        return { ...s, next: { up: nextOf("up"), down: nextOf("down") } };
+    });
+    return { stations, warnings };
+}
+
+/**
+ * 빈칸(null)이 정말 끝 역인지 묻는다
+ * A의 다음 역이 B인데 B에서 A 쪽으로 돌아가는 칸이 비어 있으면, 끝 역이 아니라 받은 순간 그쪽 열차가 없었던 것일 수 있다
+ * NEXT_OVERRIDES에 적은 칸은 이미 확인한 칸이라 뺀다
+ */
+function findUnconfirmedEnds(stations: StationWithNext[]): string[] {
+    const byName = new Map(stations.map((s) => [`${s.name}|${s.subwayId}`, s]));
+    const found: string[] = [];
+    for (const a of stations) {
+        for (const dir of DIRECTIONS) {
+            const nextName = a.next[dir];
+            if (nextName === null) continue;
+            const b = byName.get(`${nextName}|${a.subwayId}`);
+            if (!b) continue; // 제외한 역 (구파발 · 장암 …)
+            const back = OPPOSITE[dir];
+            if (b.next[back] !== null) continue;
+            if (overrideOf(b)[back] !== undefined) continue;
+            found.push(`${b.lineName} ${b.name} ${back}: 비어 있는데 ${a.name}의 ${dir} 다음 역이 ${b.name}`);
+        }
+    }
+    return found;
+}
+
 // ── 실행 ─────────────────────────────────────────────────────
 
 function main(): void {
     const raw = JSON.parse(readFileSync(RAW_PATH, "utf-8")) as RawFile;
     if (!Array.isArray(raw.DATA)) throw new Error(`DATA 배열이 없습니다: ${RAW_PATH}`);
     const rows = raw.DATA;
+    const neighbors = JSON.parse(readFileSync(NEIGHBORS_PATH, "utf-8")) as RawNeighbors;
 
     const converted = rows.flatMap(toStations);
     const { kept: unique, dropped } = dedupe(converted);
     const { kept, excluded, unmatchedKeys } = excludeUnsupported(unique);
     const byLine = excluded.filter((e) => e.reason === "line").map((e) => e.station);
     const byStation = excluded.filter((e) => e.reason === "station").map((e) => e.station);
+    // 이름 찾기에는 제외하기 전 목록(unique)을 준다: 다음 역이 제외된 역이어도 이름은 보여야 한다
+    const { stations, warnings: nextWarnings } = addNext(kept, unique, neighbors);
+    const unconfirmedEnds = findUnconfirmedEnds(stations);
 
     mkdirSync(path.dirname(OUT_PATH), { recursive: true }); //recursive:true 폴더가 이미 있으면 에러 없이 넘김
-    writeFileSync(OUT_PATH, JSON.stringify(kept, null, 2) + "\n"); // 파일이 없으면 만들고 있으면 통째로 바꿈
+    writeFileSync(OUT_PATH, JSON.stringify(stations, null, 2) + "\n"); // 파일이 없으면 만들고 있으면 통째로 바꿈
 
     // ── 확인용 출력 ──
     console.log(
@@ -363,6 +490,13 @@ function main(): void {
         for (const s of renamed) console.log(`  ${s.lineName} ${s.name} → ${s.apiName}`);
     }
 
+    const ends = stations.flatMap((s) => DIRECTIONS.filter((dir) => s.next[dir] === null).map((dir) => ({ s, dir })));
+    console.log(`\n다음 역이 없는 칸 (끝 역 · 한 방향 구간) ${ends.length}개`);
+    for (const line of new Set(ends.map((e) => e.s.lineName))) {
+        const names = ends.filter((e) => e.s.lineName === line).map((e) => `${e.s.name} ${e.dir}`);
+        console.log(`  ${line}\t${names.join(", ")}`);
+    }
+
     // ── 오타 잡기: 예외 표의 키가 실제 데이터와 하나도 안 맞으면 경고 ──
     const ids = new Set(rows.map((r) => r.bldn_id));
     const unusedRows = Object.keys(ROW_OVERRIDES).filter((id) => !ids.has(id));
@@ -375,6 +509,14 @@ function main(): void {
 
     if (unmatchedKeys.length > 0) {
         console.warn(`! 역을 하나도 못 뺀 EXCLUDED_STATIONS 키 (오타이거나 노선째 빠진 호선): ${unmatchedKeys.join(", ")}`);
+    }
+
+    const unusedNext = Object.keys(NEXT_OVERRIDES).filter((k) => !keptKeys.has(k));
+    if (unusedNext.length > 0) console.warn(`! 남은 역에 없는 NEXT_OVERRIDES 키: ${unusedNext.join(", ")}`);
+    for (const warning of nextWarnings) console.warn(`! ${warning}`);
+    if (unconfirmedEnds.length > 0) {
+        console.warn("! 끝 역이 아닐 수 있는 빈칸 → NEXT_OVERRIDES에 다음 역 이름을, 끝 역이 맞으면 null을 적는다");
+        for (const end of unconfirmedEnds) console.warn(`    ${end}`);
     }
 
     const lineSet = new Set<string>(EXCLUDED_LINES);
