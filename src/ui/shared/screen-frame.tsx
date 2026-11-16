@@ -23,6 +23,9 @@ const TONE: Record<ScreenTone, string> = {
  * 안쪽 내용이 기대도 되는 것
  *   - 세로 flex: 위에서부터 역명판 → children 순서로 쌓인다
  *   - 높이는 브라우저 화면 높이(100dvh)로 고정이고 넘치는 것은 잘린다. 스크롤은 안쪽(열차 카드 자리)이 따로 한다
+ *     자르는 방식은 overflow: clip — 틀 자체는 어떤 식으로도 스크롤되지 않는다. hidden은 눈에는 잘려 보여도 브라우저가 스크롤할 수는 있어서,
+ *     닫힌 시트(틀 바닥 아래에 내려가 있다)로 포커스가 갈 때 화면이 통째로 밀려 올라간다 (U3에서 실제로 겪음: 시트가 올라오는 도중에 Tab).
+ *     clip을 모르는 옛 브라우저(사파리 15 이하)는 hidden으로 남는다
  *   - @container-size: 글자 · 캐릭터 크기가 「화면 높이의 몇 %」(cqh)로 정해져 있어서, 이 틀이 그 기준이 된다
  *   - relative: 시트(U3) · 하단 캡슐(U5)이 이 틀을 기준으로 바닥에 붙는다
  *   - data-tone: 역명판 · 캐릭터가 흰 화면인지 색 화면인지 이 값으로 안다
@@ -36,7 +39,7 @@ export function ScreenFrame({ tone, nameplate, children }: ScreenFrameProps) {
     return (
         <main
             data-tone={tone}
-            className={`@container-size relative flex h-dvh flex-col overflow-hidden bg-(--screen-bg) text-15 leading-body tracking-body break-keep antialiased ${
+            className={`@container-size relative flex h-dvh flex-col overflow-hidden bg-(--screen-bg) text-15 leading-body tracking-body break-keep antialiased supports-[overflow:clip]:overflow-clip ${
                 tone === "white" ? "text-ink" : "text-on-ink"
             } ${TONE[tone]}`}
         >

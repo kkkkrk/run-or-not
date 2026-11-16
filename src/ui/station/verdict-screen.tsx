@@ -1,6 +1,8 @@
 import type { CharacterPose, ScreenTone, VerdictScreenProps } from "@/types/ui";
 import { Character } from "@/ui/character/character";
 import { ScreenFrame } from "@/ui/shared/screen-frame";
+import { PlatformTimeSheet } from "./platform-time-sheet";
+import { CARD_AREA, STAGE } from "./screen-parts";
 import { TrainCard } from "./train-card";
 import { VerdictTitle } from "./verdict-title";
 
@@ -25,29 +27,30 @@ const POSE: Record<Verdict, CharacterPose> = {
 };
 
 /**
- * 판정 화면 전체 — 위에서부터 역명판 → 판정 글자 → 캐릭터 → 열차 카드 (결정.md 1절, v32 screen()).
+ * 판정 화면 전체 — 위에서부터 역명판 → 판정 글자 → 캐릭터 → 열차 카드, 그 위로 올라오는 「승강장까지」 시트 (결정.md 1절, v32 screen()).
  * 바탕색 · 역명판 · 하단 캡슐 자리는 화면 틀이 맡고, 여기서는 그 사이를 채운다.
  *
  * 세로 배치: 판정 글자(mt-auto)와 캐릭터 무대(mb-auto)가 한 덩어리로 남는 높이의 가운데에 오고, 카드는 바닥에 붙는다.
  * 화면이 낮아 카드가 다 안 들어가면 카드 자리만 따로 스크롤된다 (판정 글자 · 캐릭터는 그대로 보인다).
+ * 무대 · 카드 자리의 크기는 다른 역 화면(막다른 화면 · 판정 전 화면)과 같아야 해서 screen-parts.tsx에 있다.
+ *
+ * 시트: 「승강장까지」 줄을 누르면 페이지가 sheet.open을 true로 바꾸고, 시트가 열차 카드와 하단 캡슐을 덮으며 올라온다.
+ * 판정 글자 · 캐릭터는 시트 위로 그대로 보여서, 시트에서 값을 바꾸면 뒤 판정이 바로 바뀌는 게 보인다.
  */
-export function VerdictScreen({ nameplate, verdict, card, bottomNav }: VerdictScreenProps) {
+export function VerdictScreen({ nameplate, verdict, card, sheet, bottomNav }: VerdictScreenProps) {
     return (
         <ScreenFrame tone={TONE[verdict]} nameplate={nameplate} bottomNav={bottomNav}>
             <VerdictTitle verdict={verdict} />
 
-            {/* 캐릭터 무대: 높이는 화면 높이의 24%(120 ~ 215px)이고 캐릭터는 그 높이에 맞춰 커진다. 바닥에 붙여 세운다 */}
-            <div className="relative mb-auto flex h-[clamp(120px,24cqh,215px)] flex-none items-end justify-center overflow-hidden">
+            <div className={STAGE}>
                 <Character pose={POSE[verdict]} />
             </div>
 
-            {/* 열차 카드 자리: 아래 76px는 하단 캡슐이 떠 있을 자리다 (캡슐 56px + 바닥 12px + 틈 8px).
-                스크롤되면 카드가 캡슐 밑으로 지나가게, 여백을 스크롤되는 안쪽에 둔다. 스크롤 막대는 숨긴다 */}
-            <div className="flex min-h-0 flex-initial flex-col gap-[clamp(7px,1.2cqh,10px)] overflow-y-auto px-4 pt-4 pb-19 [scrollbar-width:none] *:shrink-0 [&::-webkit-scrollbar]:hidden">
+            <div className={CARD_AREA}>
                 <TrainCard {...card} />
             </div>
 
-            {/* 「승강장까지」 시트 자리 — U3에서 여기에 <PlatformTimeSheet {...sheet} />를 붙인다. sheet는 그때까지 받기만 한다 */}
+            <PlatformTimeSheet {...sheet} />
         </ScreenFrame>
     );
 }

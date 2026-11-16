@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
-import { useState, type ReactNode } from "react";
-import type { BottomNavProps, PlatformTimeSheetProps, VerdictScreenProps } from "@/types/ui";
+import { useState } from "react";
+import type { PlatformTimeSheetProps, VerdictScreenProps } from "@/types/ui";
 import { StationNameplate } from "@/ui/station/station-nameplate";
 import { VerdictScreen } from "@/ui/station/verdict-screen";
 import { VerdictTitle } from "@/ui/station/verdict-title";
+import { BoardTitle, BOTTOM_NAV, FullLink, Group, log, Phone, UnknownScreen, WRAP } from "./kit";
 import {
     ALL_CASES,
     DEMO_CASE,
@@ -35,18 +35,7 @@ import {
 
 /* ───────────────────────── 가짜 콜백 · 가짜 props ───────────────────────── */
 
-/** 콜백이 불렸다는 것을 콘솔에 남긴다 (plan.md U2 확인 「누르면 콘솔에 콜백 로그」) */
-const log = (where: string, what: string) => console.log(`[미리보기 ${where}] ${what}`);
-
-/** 하단 캡슐은 U5에서 그린다. 화면 props에 꼭 있어야 해서 값만 채워 둔다 */
-const BOTTOM_NAV: BottomNavProps = {
-    active: "verdict",
-    searchHref: "/",
-    verdictHref: "/preview",
-    settingsHref: "/settings",
-};
-
-/** 「승강장까지」 시트는 U3에서 붙인다. 닫힌 시트의 값만 채워 둔다 */
+/** 이 묶음에서는 「승강장까지」 시트를 열지 않는다 (시트는 U3 묶음에서 눌러 본다). 닫힌 시트의 값만 채워 둔다 */
 const closedSheet = (walk: Walk, where: string): PlatformTimeSheetProps => ({
     open: false,
     onOpenChange: (open) => log(where, `시트 onOpenChange(${open})`),
@@ -84,7 +73,7 @@ function toProps(c: ScreenCase): VerdictScreenProps {
  * 여기는 props가 바뀌면 화면이 어떻게 달라지는지만 보여 준다.
  *   역명판 양옆     → selected가 바뀐다
  *   새로고침 글자   → spinOnceKey가 1 커진다 (아이콘이 한 바퀴)
- *   「승강장까지」 줄 → sheetOpen이 뒤집힌다 (모양은 그대로이고 버튼의 aria-expanded만 바뀐다. 시트는 U3)
+ *   「승강장까지」 줄 → sheetOpen이 뒤집힌다 (모양은 그대로이고 버튼의 aria-expanded만 바뀐다. 시트가 열리는 것은 U3 묶음의 눌러 보기에서)
  */
 function useDemo() {
     const [selected, setSelected] = useState<Station["selected"]>("right");
@@ -180,32 +169,6 @@ function DemoFull() {
 
 /* ───────────────────────── 보드 ───────────────────────── */
 
-/**
- * 휴대폰 크기 칸 (390 × 844, 작은 화면은 375 × 667 — v32의 .phone).
- * 화면 틀은 원래 브라우저 화면 높이(100dvh)를 쓴다. 여러 장을 한 페이지에 늘어놓으려고
- * 이 칸 안에서만 틀(<main>)의 높이를 칸 높이로 덮어쓴다 ([&>main]:h-full!).
- * 글자 · 캐릭터 크기(cqh)는 틀의 높이를 따르므로 그 크기 휴대폰에서 보는 것과 같다.
- * 점선은 하단 캡슐이 들어올 자리다 — 화면 컴포넌트가 그린 게 아니라 미리보기가 얹은 표시이고, U5에서 진짜 캡슐로 바뀐다.
- * (크기 클래스의 숫자 × 4 = px: w-97.5 h-211 = 390 × 844, w-93.75 h-166.75 = 375 × 667)
- */
-function Phone({ small, children }: { small: boolean; children: ReactNode }) {
-    return (
-        <div
-            className={`relative flex-none overflow-hidden shadow-[0_0_0_1px_rgb(15_23_42/0.12),0_10px_28px_rgb(15_23_42/0.12)] [&>main]:h-full! ${
-                small ? "h-166.75 w-93.75 rounded-[26px]" : "h-211 w-97.5 rounded-[30px]"
-            }`}
-        >
-            {children}
-            <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-4 bottom-3 z-10 grid h-14 place-items-center rounded-full border border-dashed border-white/45 text-[11px] font-bold text-white/60"
-            >
-                하단 캡슐 자리 · U5
-            </div>
-        </div>
-    );
-}
-
 /** 보드 = 제목 + 한 줄 설명 + 휴대폰 칸 + 「이 화면만 크게 보기」 */
 function Board({ c }: { c: ScreenCase }) {
     return (
@@ -218,40 +181,6 @@ function Board({ c }: { c: ScreenCase }) {
         </section>
     );
 }
-
-function BoardTitle({ name, note }: { name: string; note: string }) {
-    return (
-        <h4 className="mb-2 text-14 font-extrabold">
-            {name}
-            {note && <small className="block text-12 font-semibold text-sub">{note}</small>}
-        </h4>
-    );
-}
-
-/** 이 화면 하나만 실제 페이지처럼 브라우저 가득 띄운다 — DevTools 390 · 375 폭과 PC 폭에서 볼 때 */
-function FullLink({ id }: { id: string }) {
-    return (
-        <Link
-            href={`/preview?screen=${id}`}
-            className="mt-2 inline-block text-12 font-bold text-sub underline underline-offset-[3px]"
-        >
-            이 화면만 크게 보기 (?screen={id})
-        </Link>
-    );
-}
-
-function Group({ title, note, children }: { title: string; note: string; children: ReactNode }) {
-    return (
-        <section className="mt-11">
-            <h3 className="text-16 font-extrabold">{title}</h3>
-            <p className="mt-0.5 mb-4 max-w-245 text-13 font-semibold text-sub">{note}</p>
-            {children}
-        </section>
-    );
-}
-
-/** 보드를 옆으로 늘어놓고, 자리가 모자라면 다음 줄로 */
-const WRAP = "flex flex-wrap items-start gap-x-6 gap-y-9";
 
 /* ───────────────────────── 역명판 · 판정 글자만 따로 ───────────────────────── */
 
@@ -395,7 +324,7 @@ export function U2VerdictPreview() {
                 <h4 className="mt-7 mb-3 text-14 font-extrabold">
                     다른 바탕 — 화면 틀의 tone에 따라 색이 바뀜
                     <small className="block text-12 font-semibold text-sub">
-                        이 바탕을 쓰는 화면 전체(막다른 화면 · 판정 전 화면)는 U3에서 만들어요
+                        이 바탕을 쓰는 화면 전체(막다른 화면 · 판정 전 화면)는 아래 U3 묶음에 있어요
                     </small>
                 </h4>
                 <div className={WRAP}>
@@ -432,15 +361,6 @@ export function U2FullScreen({ id }: { id: string }) {
     if (id === DEMO_ID) return <DemoFull />;
 
     const found = ALL_CASES.find((c) => c.id === id);
-    if (!found) {
-        return (
-            <div className="p-5 text-15 text-ink">
-                <p className="font-bold">「{id}」라는 미리보기 화면이 없어요.</p>
-                <Link href="/preview" className="mt-2 inline-block underline underline-offset-[3px]">
-                    미리보기로 돌아가기
-                </Link>
-            </div>
-        );
-    }
+    if (!found) return <UnknownScreen id={id} />;
     return <VerdictScreen {...toProps(found)} />;
 }

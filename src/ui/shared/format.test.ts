@@ -2,7 +2,7 @@
 // 표시 형식의 경계값을 고정한다 (plan.md 1-2 — 표시 형식은 UI가 만들고 테스트도 같이 쓴다)
 // 기준 글자는 design/v32.html 그림에 실제로 나오는 것들이다 (0분50초 · 3분20초 · 뛰어도 1분 부족 · 10초 전)
 import { describe, expect, it } from "vitest";
-import { formatDuration, formatElapsed, formatTrainTime, roundTo10 } from "./format";
+import { durationParts, formatDuration, formatElapsed, formatTrainTime, roundTo10 } from "./format";
 
 describe("roundTo10 — 10초 단위 반올림", () => {
     it("이미 10초 단위면 그대로", () => {
@@ -52,6 +52,44 @@ describe("formatDuration — 승강장까지 · 부족 (짧게)", () => {
     it("roundTo10과 같이 쓰면 화면 글자가 된다", () => {
         expect(formatDuration(roundTo10(396))).toBe("6분40초");
         expect(formatDuration(roundTo10(78))).toBe("1분20초");
+    });
+});
+
+describe("durationParts — 시트의 큰 숫자 (숫자와 단위를 따로)", () => {
+    it("분과 초가 다 있으면 두 조각 — v32 시트 그림의 「3분 30초」", () => {
+        expect(durationParts(210)).toEqual([
+            { value: 3, unit: "분" },
+            { value: 30, unit: "초" },
+        ]);
+    });
+
+    it("초가 0이면 분만 — 칩 3 · 5 · 7 · 10분", () => {
+        expect(durationParts(180)).toEqual([{ value: 3, unit: "분" }]);
+        expect(durationParts(600)).toEqual([{ value: 10, unit: "분" }]);
+    });
+
+    it("1분이 안 되면 초만 — 가장 작은 값 30초", () => {
+        expect(durationParts(30)).toEqual([{ value: 30, unit: "초" }]);
+    });
+
+    it("둘 다 0이면 「0초」 한 조각 (빈 글자가 되지 않는다)", () => {
+        expect(durationParts(0)).toEqual([{ value: 0, unit: "초" }]);
+    });
+
+    it("1시간이 넘어도 분으로 — 가장 큰 값 60분", () => {
+        expect(durationParts(3600)).toEqual([{ value: 60, unit: "분" }]);
+    });
+
+    it("소수는 가까운 초로, 음수는 0초로 (formatDuration과 같은 규칙)", () => {
+        expect(durationParts(59.6)).toEqual([{ value: 1, unit: "분" }]);
+        expect(durationParts(-3)).toEqual([{ value: 0, unit: "초" }]);
+    });
+
+    it("roundTo10과 같이 쓰면 시트의 큰 숫자가 된다 — 396초 → 「6분 40초」", () => {
+        expect(durationParts(roundTo10(396))).toEqual([
+            { value: 6, unit: "분" },
+            { value: 40, unit: "초" },
+        ]);
     });
 });
 

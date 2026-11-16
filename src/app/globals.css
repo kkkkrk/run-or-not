@@ -104,10 +104,14 @@
   --tracking-num: -0.03em;         /* 숫자 (tabular-nums와 같이 쓴다) */
   --leading-body: 1.4;             /* 화면 기본 줄 높이 */
 
-  /* 7) 움직임 — 캐릭터 말고 움직이는 것은 새로고침 아이콘 하나다 (결정.md 4절 「새로고침」, 시안 v32 CSS 7절 .rf-spin — U2에서 더함).
-        animate-refresh-spin: 받는 동안 0.7초에 한 바퀴씩 계속 돈다 */
+  /* 7) 움직임 — 캐릭터 말고 움직이는 것은 새로고침 아이콘과 로딩 스켈레톤이다. (시트가 올라오는 전환은 sheet-frame.tsx에 있다)
+        animate-refresh-spin: 받는 동안 0.7초에 한 바퀴씩 계속 돈다 (결정.md 4절 「새로고침」, 시안 v32 CSS 7절 .rf-spin — U2에서 더함)
+        animate-skeleton: 스켈레톤 위로 밝은 띠가 1.4초에 한 번 지나간다 (시안 v32 CSS 7절 .skel의 shimmer — U3에서 더함).
+                          이름을 shimmer로 짓지 않았다: shadcn/tailwind.css에 이미 shimmer라는 유틸리티가 있다 */
   --animate-refresh-spin: refresh-spin 0.7s linear infinite;
   @keyframes refresh-spin { to { transform: rotate(360deg); } }
+  --animate-skeleton: skeleton-shimmer 1.4s infinite;
+  @keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 }
 
 
