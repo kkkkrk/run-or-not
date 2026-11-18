@@ -2,11 +2,10 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 import { useSettingsStore } from "@/stores/settings-store";
-import { useWalkTimeStore } from "@/stores/walk-time-store";
 
 // skipHydration: true로 만든 persist 스토어 목록.
 // 7단계에서 favorites-store·recent-store를 여기에 추가한다.
-const PERSISTED_STORES = [useSettingsStore, useWalkTimeStore];
+const PERSISTED_STORES = [useSettingsStore];
 
 // 스토어 중 하나라도 복원이 끝나면 React에게 "스냅샷 다시 읽어"라고 알린다.
 function subscribe(onStoreChange: () => void): () => void {

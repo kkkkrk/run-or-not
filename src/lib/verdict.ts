@@ -22,7 +22,7 @@ export type Verdict =
     | { kind: "keep-walking"; trains: TrainVerdict[]; platformAt: number }; // 일단 걸어가요
 
 const TIGHT_SEC = 20;
-const SLOW_SEC = 20;
+const SLOW_SEC = 180;
 
 function ceilSec(input: number): number{
     return Math.ceil(input - 1e-9);
@@ -46,7 +46,7 @@ export function judgeTrain(
 {
     let kind:"slow" | "walk" | "run" | "miss" | "tight";
     const remainingSec = (arrival.arrivalAt - now) / 1000;
-    if(remainingSec>= need.walk + s.marginSec){
+    if(remainingSec >= need.walk + s.marginSec){
         kind = remainingSec >= need.walk + SLOW_SEC ? "slow" : "walk";
     } else if(remainingSec >= need.run + TIGHT_SEC){
         kind = "run";
