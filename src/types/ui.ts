@@ -16,6 +16,7 @@
  *   도보 시간 없음 → PlatformTimeAskScreenProps  판정 멈춤 → StalledScreenProps     0대 → EmptyScreenProps
  *   그 밖 → VerdictScreenProps
  *   「승강장까지」 시트는 VerdictScreenProps · EmptyScreenProps 안의 sheet(PlatformTimeSheetProps)로 받고, 화면이 시트까지 그린다.
+ *   설정 시트도 같다: SettingsScreenProps 안의 sheet(SettingSheetProps)로 받고, 설정 화면이 시트까지 그린다 (2026-11-18 추가).
  *
  * 차례: 1 공통 · 2 역명판 · 3 판정 글자와 캐릭터 · 4 열차 카드 · 5 판정 화면 · 6 「승강장까지」 시트
  *       7 판정 전 화면 · 8 막다른 화면 · 9 하단 캡슐 · 10 설정 · 11 역 찾기(자리만) · 12 틀(UI 안에서만)
@@ -275,21 +276,23 @@ export type SettingItem = {
     position: SettingPosition;        // 단계가 아니면 UI가 세 버튼을 끄고 「직접 · 시속 4.8km」를 쓴다
 };
 
-/** 설정 화면 — 한 카드 안에 네 항목, 항목마다 단계 버튼 셋 (결정.md 1절) */
+/** 설정 화면 — 한 카드 안에 네 항목, 항목마다 단계 버튼 셋, 그 위로 올라오는 설정 시트 (결정.md 1절) */
 export type SettingsScreenProps = {
     items: Record<SettingKey, SettingItem>;
     onSelectStep: (key: SettingKey, step: SettingStep) => void;  // 단계 버튼을 눌렀을 때
-    onOpenSheet: (key: SettingKey) => void;                      // 이름 줄(끝에 ›)을 눌렀을 때 → 그 항목의 시트
+    onOpenSheet: (key: SettingKey) => void;                      // 이름 줄(끝에 ›)을 눌렀을 때 → 페이지가 sheet.settingKey를 그 항목으로, sheet.open을 true로 바꾼다
     canReset: boolean;       // 「처음 값으로」 — 바꾼 값이 있을 때만 켜진다
     onReset: () => void;
+    sheet: SettingSheetProps;  // 설정 시트. 화면이 같이 그린다 (판정 화면의 sheet와 같은 방식 — 2026-11-18 추가)
     bottomNav: BottomNavProps;
 };
 
-/** 설정 시트 — 항목 하나를 − + 로 세밀하게. 「승강장까지」 시트와 같은 모양 (결정.md 1절) */
+/** 설정 시트 — 항목 하나를 − + 로 세밀하게. 「승강장까지」 시트와 같은 모양. 설정 화면 props의 sheet로 받는다 (결정.md 1절) */
 export type SettingSheetProps = {
     open: boolean;
-    onOpenChange: (open: boolean) => void;
+    onOpenChange: (open: boolean) => void;  // 완료 · Esc · 바깥을 누르면 false
     settingKey: SettingKey;   // 어느 항목인지 → 제목 · 설명 · 단위 · 단계 이름은 UI가 정한다
+                              // 닫혀 있을 때도 값이 있어야 한다 — 마지막으로 연 항목을 그대로 두면 내려가는 동안 같은 내용이 보인다
     item: SettingItem;        // 가운데 큰 숫자와 그 아래 비교 한 줄
     canDecrease: boolean;     // 범위 비교는 로직
     canIncrease: boolean;
