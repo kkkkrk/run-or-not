@@ -27,15 +27,12 @@ export const BOTTOM_NAV: BottomNavProps = {
  * 화면 틀은 원래 브라우저 화면 높이(100dvh)를 쓴다. 여러 장을 한 페이지에 늘어놓으려고
  * 이 칸 안에서만 틀(<main>)의 높이를 칸 높이로 덮어쓴다 ([&>main]:h-full!).
  * 글자 · 캐릭터 크기(cqh)는 틀의 높이를 따르므로 그 크기 휴대폰에서 보는 것과 같다.
- *
- * contain-layout: 설정 시트는 화면 틀 밖에서 position: fixed로 「화면 전체」에 깔린다 (src/ui/settings/setting-sheet.tsx).
- * 이 칸이 그 화면이 되게 한다 — layout 가두기를 건 상자는 안쪽 fixed의 기준이 된다. 없으면 설정 시트가 전부 브라우저 창 바닥에 붙는다.
  * (크기 클래스의 숫자 × 4 = px: w-97.5 h-211 = 390 × 844, w-93.75 h-166.75 = 375 × 667)
  */
 export function Phone({ small, children }: { small: boolean; children: ReactNode }) {
     return (
         <div
-            className={`relative flex-none overflow-hidden contain-layout shadow-[0_0_0_1px_rgb(15_23_42/0.12),0_10px_28px_rgb(15_23_42/0.12)] [&>main]:h-full! ${
+            className={`relative flex-none overflow-hidden shadow-[0_0_0_1px_rgb(15_23_42/0.12),0_10px_28px_rgb(15_23_42/0.12)] [&>main]:h-full! ${
                 small ? "h-166.75 w-93.75 rounded-[26px]" : "h-211 w-97.5 rounded-[30px]"
             }`}
         >

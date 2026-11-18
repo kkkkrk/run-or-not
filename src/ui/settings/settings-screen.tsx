@@ -2,23 +2,27 @@ import type { SettingsScreenProps, SettingStep } from "@/types/ui";
 import { rowChevron } from "@/ui/shared/icons";
 import { ScreenFrame } from "@/ui/shared/screen-frame";
 import { SETTING, SETTING_KEYS, stepNamesOf, valueText } from "./setting-items";
+import { SettingSheet } from "./setting-sheet";
 
 const STEPS: SettingStep[] = [0, 1, 2];
 
 /**
  * 설정 화면 — 한 카드 안에 걷기 속도 · 뛰기 속도 · 역 안 이동 · 여유, 항목마다 세 단계 버튼
  * (결정.md 1절 「설정 화면」, v32 CSS 11절 .home-top · .wordmark, 12절 .settings · .card · .seg · .reset · .o1-*, 스크립트 5절 settings()).
- * 흰 화면이고 역명판이 없다. 맨 위에 「설정」과 오른쪽 「처음 값으로」, 그 아래 카드, 맨 아래 하단 캡슐(화면 틀이 놓는다).
+ * 흰 화면이고 역명판이 없다. 맨 위에 「설정」과 오른쪽 「처음 값으로」, 그 아래 카드, 맨 아래 하단 캡슐(화면 틀이 놓는다),
+ * 그 위로 올라오는 설정 시트.
  *
  * 값은 하나도 들고 있지 않다 — 누르면 콜백으로 알리고, 바뀐 값을 props로 다시 받아 그린다.
  *   단계 버튼        onSelectStep(항목, 0 | 1 | 2). 켜진 버튼은 지금 값이 그 단계일 때(item.position이 "step")
- *   이름 줄(끝에 ›)  onOpenSheet(항목) → 페이지가 그 항목의 설정 시트를 연다. 줄 전체가 버튼이다
+ *   이름 줄(끝에 ›)  onOpenSheet(항목) → 페이지가 sheet.settingKey를 그 항목으로, sheet.open을 true로 바꾼다. 줄 전체가 버튼이다
  *   처음 값으로      onReset(). canReset이 false면 꺼져 있다 (바꾼 값이 없을 때)
  * 단계에 없는 값이면(position이 "step"이 아니면) 세 버튼을 모두 끄고 이름 줄 오른쪽에 「직접 · 시속 4.8km」를 진하게 쓴다.
  * 평소(단계 값일 때)에는 그 자리에 아무 글자도 없다.
  *
- * 설정 시트는 이 화면이 그리지 않는다. 페이지가 이 화면 옆에 <SettingSheet>를 따로 그린다 (setting-sheet.tsx) —
- * SettingsScreenProps에 시트 값이 없어서다 (ui.ts 10절). 그래서 이름 줄 버튼은 「누르면 대화 상자가 뜬다」(aria-haspopup)만 알린다.
+ * 설정 시트: props의 sheet로 받아 이 화면이 같이 그린다 — 판정 화면이 「승강장까지」 시트를 그리는 것과 같다 (setting-sheet.tsx).
+ * 닫혀 있을 때도 늘 그려 둔다. 시트는 화면 틀의 바닥에 붙고, 열리면 화면 전체가 어둡게 덮인다.
+ * 열려 있는 동안 뒤의 카드 · 캡슐은 눌리지 않고(시트 틀의 바깥 층이 막는다) 포커스도 시트 안에 머문다.
+ * 이름 줄 버튼은 「누르면 대화 상자가 뜬다」(aria-haspopup)만 알린다 (v32와 같다).
  *
  * 「처음 값으로」가 꺼졌을 때 disabled가 아니라 aria-disabled인 까닭: 키보드로 눌러서 처음 값이 되는 순간 버튼이 꺼지는데,
  * disabled로 바뀌면 그 버튼에 있던 포커스가 갈 곳을 잃는다 (시트의 − + 와 같은 까닭). 꺼진 버튼은 흐려지고 눌러도 아무 일도 없다.
@@ -31,7 +35,9 @@ const STEPS: SettingStep[] = [0, 1, 2];
  * 이름 줄 min-h-11.75 px-0.5 pt-3.75 pb-2.5 = 47 · 2 · 15 · 10px (-mt-3.75로 줄 위 여백까지 올라가 그만큼 누르는 곳이 넓다),
  * 단계 묶음 p-1 gap-1 = 4px, 단계 버튼 h-10.5 = 42px.
  */
-export function SettingsScreen({ items, onSelectStep, onOpenSheet, canReset, onReset, bottomNav }: SettingsScreenProps) {
+export function SettingsScreen(props: SettingsScreenProps) {
+    const { items, onSelectStep, onOpenSheet, canReset, onReset, sheet, bottomNav } = props;
+
     return (
         <ScreenFrame tone="white" nameplate={null} bottomNav={bottomNav}>
             <header className="flex h-14 flex-none items-center justify-between px-4.5 pt-1">
@@ -96,6 +102,8 @@ export function SettingsScreen({ items, onSelectStep, onOpenSheet, canReset, onR
                     })}
                 </div>
             </div>
+
+            <SettingSheet {...sheet} />
         </ScreenFrame>
     );
 }

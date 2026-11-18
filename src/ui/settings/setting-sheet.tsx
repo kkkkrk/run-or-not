@@ -45,37 +45,30 @@ function positionNote(key: SettingKey, item: SettingItem): string {
  *   더 못 가면 끈다(canDecrease · canIncrease).
  * - 값은 하나도 들고 있지 않다. 어느 항목인지(settingKey)와 그 값(item)을 받아 제목 · 설명 · 단위 · 단계 이름을 고른다.
  *
- * 놓이는 곳 — 「승강장까지」 시트와 다르다
- *   이 시트는 설정 화면(SettingsScreen)이 그리지 않고, 페이지가 화면 옆에 따로 그린다 (ui.ts에서 둘의 props가 따로다).
- *   그래서 화면 틀 안에 있지 않고, 스스로 화면 전체를 덮는 층을 깐다: position: fixed · 가운데 600px(layout.tsx의 가운데 칸과 같은 폭).
- *   페이지 어디에 두어도(화면 앞이든 뒤든) 같은 자리에 뜬다.
- *   ※ layout.tsx의 칸 폭(max-w-150)이 바뀌면 여기 max-w-150도 같이 바꿔야 한다.
- *   - 층은 닫혀 있는 동안 「누름 통과」다 (pointer-events-none) — 뒤의 설정 화면을 그대로 누를 수 있다. 열리면 시트 틀의 바깥 층이 누름을 막는다
- *   - 층은 넘치는 것을 자르고 스크롤되지 않는다 (overflow: clip) — 닫힌 시트가 층 바닥 아래에 내려가 있다. 화면 틀과 같은 까닭이다 (screen-frame.tsx)
- *   - 층에는 화면 틀이 주던 글자 기본값을 다시 준다 (15px · 줄 높이 1.4 · 자간 −0.015em · 낱말 단위 줄바꿈) — 틀 밖이라 물려받지 못한다
- *   - data-sheet="setting": 시트 틀이 이 표시를 보고 설정 시트의 값(아래 여백 28px · 제목 줄 위로 맞춤 …)을 고른다
+ * 놓이는 곳: 설정 화면(SettingsScreen)이 화면 틀 안의 맨 아래에 그린다 — 「승강장까지」 시트와 같은 자리다 (ui.ts SettingsScreenProps.sheet).
+ * 틀의 바닥에 붙어서 카드 아래쪽과 하단 캡슐을 덮는다.
  *
- * 뒤를 어둡게 덮는 막 (v32 .scrim): 짙은 남색 32%. 이 시트에만 있다 — 「승강장까지」 시트는 뒤의 판정 글자 · 캐릭터를 보여야 해서 막이 없다.
+ * 감싼 것(data-sheet="setting"): 시트 틀이 이 표시를 보고 설정 시트의 값(아래 여백 28px · 제목 줄 위로 맞춤 …)을 고른다.
+ * 표시만 하는 요소라 상자를 만들지 않는다 (display: contents) — 안의 막과 시트는 화면 틀을 기준으로 자리를 잡는다.
+ *
+ * 뒤를 어둡게 덮는 막 (v32 .scrim): 화면 틀 전체 · 짙은 남색 32%. 이 시트에만 있다 — 「승강장까지」 시트는 뒤의 판정 글자 · 캐릭터를 보여야 해서 막이 없다.
  * 열릴 때 0.2초 동안 진해지고(v32 fade-in 0.2s ease) 닫힐 때 같은 값으로 옅어진다. 처음부터 열린 채로 그려지면 움직이지 않는다.
- * 막은 그림일 뿐이고 누름은 시트 틀의 바깥 층이 받는다 (그래서 닫히는 동안에는 눌리지 않는다).
+ * 막은 그림일 뿐이라 늘 「누름 통과」다 (pointer-events-none) — 닫혀 있을 때도 화면 위에 투명하게 남아 있어서, 이게 없으면 설정 화면이 안 눌린다.
+ * 누름은 시트 틀의 바깥 층(열려 있을 때만 있다)이 받는다. z-15는 하단 캡슐(10)보다 위, 시트(20)보다 아래다.
  *
- * 페이지가 지킬 것: 닫혀 있을 때도 늘 그려 둔다 (open만 바꾼다). 열 때만 그리면 올라오고 내려가는 움직임이 없다.
- * 닫힌 뒤에도 settingKey를 그대로 두면 내려가는 동안 같은 내용이 보인다.
+ * 닫혀 있을 때도 늘 그려져 있다 (open만 바뀐다). 닫힌 뒤에도 settingKey가 그대로면 내려가는 동안 같은 내용이 보인다.
  *
- * 크기 클래스의 숫자 × 4 = 시안의 px: mt-6.5 = 26px, mt-3 = 12px, max-w-150 = 600px. − + 칸은 52px, 가운데 숫자가 남은 폭을 쓴다.
+ * 크기 클래스의 숫자 × 4 = 시안의 px: mt-6.5 = 26px, mt-3 = 12px. − + 칸은 52px, 가운데 숫자가 남은 폭을 쓴다.
  */
 export function SettingSheet(props: SettingSheetProps) {
     const { open, onOpenChange, settingKey, item, canDecrease, canIncrease, onDecrease, onIncrease } = props;
     const { label, description, unit } = SETTING[settingKey];
 
     return (
-        <div
-            data-sheet="setting"
-            className="pointer-events-none fixed inset-0 z-20 mx-auto max-w-150 overflow-hidden text-15 leading-body tracking-body break-keep antialiased supports-[overflow:clip]:overflow-clip"
-        >
+        <div data-sheet="setting" className="contents">
             <div
                 aria-hidden="true"
-                className={`absolute inset-0 bg-[rgb(15_23_42/0.32)] transition-opacity duration-200 ease-[ease] motion-reduce:transition-none ${
+                className={`pointer-events-none absolute inset-0 z-15 bg-[rgb(15_23_42/0.32)] transition-opacity duration-200 ease-[ease] motion-reduce:transition-none ${
                     open ? "" : "opacity-0"
                 }`}
             />

@@ -2,7 +2,6 @@
 
 import { useState, type ReactNode } from "react";
 import type { ScreenTone, SettingKey, SettingSheetProps, SettingsScreenProps } from "@/types/ui";
-import { SettingSheet } from "@/ui/settings/setting-sheet";
 import { SettingsScreen } from "@/ui/settings/settings-screen";
 import { BottomNav } from "@/ui/shared/bottom-nav";
 import { ScreenFrame } from "@/ui/shared/screen-frame";
@@ -45,6 +44,7 @@ import {
  *   완료 · Esc · 시트 바깥  → onOpenChange(false) → 시트가 닫힌다
  *   처음 값으로            → 네 값이 전부 「보통」으로
  * 어느 항목의 시트인지(sheetKey)는 닫힌 뒤에도 그대로 둔다 — 그래야 내려가는 동안 같은 내용이 보인다.
+ * 시트의 값은 화면 props의 sheet로 넘긴다 (설정 화면이 시트까지 그린다).
  */
 function useSettingsDemo(c: SettingsCase) {
     const [values, setValues] = useState(c.values);
@@ -52,30 +52,6 @@ function useSettingsDemo(c: SettingsCase) {
     const [open, setOpen] = useState(c.open !== null);
 
     const change = (key: SettingKey, value: number) => setValues((before) => ({ ...before, [key]: value }));
-
-    const screen: SettingsScreenProps = {
-        items: {
-            walk: fakeItem("walk", values.walk),
-            run: fakeItem("run", values.run),
-            station: fakeItem("station", values.station),
-            margin: fakeItem("margin", values.margin),
-        },
-        onSelectStep: (key, step) => {
-            log(c.id, `onSelectStep("${key}", ${step})`);
-            change(key, fakeStepValue(key, step));
-        },
-        onOpenSheet: (key) => {
-            log(c.id, `onOpenSheet("${key}")`);
-            setSheetKey(key);
-            setOpen(true);
-        },
-        canReset: fakeCanReset(values),
-        onReset: () => {
-            log(c.id, "onReset()");
-            setValues(DEFAULTS);
-        },
-        bottomNav: { ...BOTTOM_NAV, active: "settings" },
-    };
 
     const value = values[sheetKey];
     const sheet: SettingSheetProps = {
@@ -98,14 +74,34 @@ function useSettingsDemo(c: SettingsCase) {
         },
     };
 
+    const screen: SettingsScreenProps = {
+        items: {
+            walk: fakeItem("walk", values.walk),
+            run: fakeItem("run", values.run),
+            station: fakeItem("station", values.station),
+            margin: fakeItem("margin", values.margin),
+        },
+        onSelectStep: (key, step) => {
+            log(c.id, `onSelectStep("${key}", ${step})`);
+            change(key, fakeStepValue(key, step));
+        },
+        onOpenSheet: (key) => {
+            log(c.id, `onOpenSheet("${key}")`);
+            setSheetKey(key);
+            setOpen(true);
+        },
+        canReset: fakeCanReset(values),
+        onReset: () => {
+            log(c.id, "onReset()");
+            setValues(DEFAULTS);
+        },
+        sheet,
+        bottomNav: { ...BOTTOM_NAV, active: "settings" },
+    };
+
     return {
-        // 페이지가 그리는 모양 그대로: 설정 화면 옆에 설정 시트를 따로 그린다 (시트는 늘 그려 두고 open만 바꾼다)
-        view: (
-            <>
-                <SettingsScreen {...screen} />
-                <SettingSheet {...sheet} />
-            </>
-        ),
+        // 페이지가 그리는 모양 그대로: 화면 컴포넌트 하나
+        view: <SettingsScreen {...screen} />,
         values,
         open,
         sheetKey,
@@ -140,7 +136,7 @@ function SettingsBoard({ c }: { c: SettingsCase }) {
     );
 }
 
-/** 설정을 한 장만 크게: 휴대폰 칸도 조절 버튼도 없이 화면과 시트만 */
+/** 설정을 한 장만 크게: 휴대폰 칸도 조절 버튼도 없이 화면만 */
 function SettingsFull({ c }: { c: SettingsCase }) {
     return useSettingsDemo(c).view;
 }
