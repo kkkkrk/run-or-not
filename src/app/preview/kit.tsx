@@ -10,12 +10,16 @@ import type { BottomNavProps } from "@/types/ui";
 /** 콜백이 불렸다는 것을 콘솔에 남긴다 (plan.md U2 확인 「누르면 콘솔에 콜백 로그」) */
 export const log = (where: string, what: string) => console.log(`[미리보기 ${where}] ${what}`);
 
-/** 하단 캡슐은 U5에서 그린다. 화면 props에 꼭 있어야 해서 값만 채워 둔다 */
+/**
+ * 하단 캡슐에 넘기는 값. 주소는 미리보기 안에서 돈다 — 탭을 누르면 그 탭의 화면 한 장만 크게 보기로 간다
+ * (역 찾기 자리 · 눌러 보는 판정 화면 · 눌러 보는 설정 화면). 그래서 한 장만 크게 볼 때는 캡슐로 세 화면을 오갈 수 있다.
+ * 실제 주소(/ · /station/… · /settings)는 페이지가 넘긴다
+ */
 export const BOTTOM_NAV: BottomNavProps = {
     active: "verdict",
-    searchHref: "/",
-    verdictHref: "/preview",
-    settingsHref: "/settings",
+    searchHref: "/preview?screen=search",
+    verdictHref: "/preview?screen=demo",
+    settingsHref: "/preview?screen=settings",
 };
 
 /**
@@ -24,25 +28,18 @@ export const BOTTOM_NAV: BottomNavProps = {
  * 이 칸 안에서만 틀(<main>)의 높이를 칸 높이로 덮어쓴다 ([&>main]:h-full!).
  * 글자 · 캐릭터 크기(cqh)는 틀의 높이를 따르므로 그 크기 휴대폰에서 보는 것과 같다.
  *
- * 점선은 하단 캡슐이 들어올 자리다 — 화면 컴포넌트가 그린 게 아니라 미리보기가 얹은 표시이고, U5에서 진짜 캡슐로 바뀐다.
- *   - 흰 화면(data-tone="white") 위에서는 흰 점선이 안 보여서 짙은 색으로 바꾼다
- *   - 시트가 열려 있으면 숨긴다 (시트가 캡슐을 덮는다 — 결정.md 1절)
+ * contain-layout: 설정 시트는 화면 틀 밖에서 position: fixed로 「화면 전체」에 깔린다 (src/ui/settings/setting-sheet.tsx).
+ * 이 칸이 그 화면이 되게 한다 — layout 가두기를 건 상자는 안쪽 fixed의 기준이 된다. 없으면 설정 시트가 전부 브라우저 창 바닥에 붙는다.
  * (크기 클래스의 숫자 × 4 = px: w-97.5 h-211 = 390 × 844, w-93.75 h-166.75 = 375 × 667)
  */
 export function Phone({ small, children }: { small: boolean; children: ReactNode }) {
     return (
         <div
-            className={`relative flex-none overflow-hidden shadow-[0_0_0_1px_rgb(15_23_42/0.12),0_10px_28px_rgb(15_23_42/0.12)] [&>main]:h-full! ${
+            className={`relative flex-none overflow-hidden contain-layout shadow-[0_0_0_1px_rgb(15_23_42/0.12),0_10px_28px_rgb(15_23_42/0.12)] [&>main]:h-full! ${
                 small ? "h-166.75 w-93.75 rounded-[26px]" : "h-211 w-97.5 rounded-[30px]"
             }`}
         >
             {children}
-            <div
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-4 bottom-3 z-10 grid h-14 place-items-center rounded-full border border-dashed border-white/45 text-[11px] font-bold text-white/60 [main:has([role=dialog]:not([inert]))~&]:hidden [main[data-tone=white]~&]:border-ink/25 [main[data-tone=white]~&]:text-ink/45"
-            >
-                하단 캡슐 자리 · U5
-            </div>
         </div>
     );
 }
@@ -83,6 +80,9 @@ export function Group({ title, note, children }: { title: string; note: string; 
 
 /** 보드를 옆으로 늘어놓고, 자리가 모자라면 다음 줄로 */
 export const WRAP = "flex flex-wrap items-start gap-x-6 gap-y-9";
+
+/** 화면 틀 없이 부품만 놓는 칸에 주는 글자 기본값 — 화면 틀이 주는 것과 같다 (15px · 줄 높이 1.4 · 자간 −0.015em) */
+export const PART_BASE = "text-15 leading-body tracking-body break-keep";
 
 /**
  * 미리보기 조절 버튼 (처음으로 · 상태 켜고 끄기). 보이는 높이는 32px이고 누르는 영역만 위아래 6px씩 넓혀 44px (::after).

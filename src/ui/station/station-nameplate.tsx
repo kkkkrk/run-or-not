@@ -30,12 +30,12 @@ function badgeText(lineName: string): string {
  */
 export function StationNameplate({
     stationName,
-    lineName,
+    lineName, 
     lineColor,
-    left,
-    right,
-    selected,
-    onSelect,
+    left,       //왼쪽 칸에 보일 역 이름
+    right,      //오른쪽 칸에 보일 역 이름
+    selected,   // 선택된 역 left or right
+    onSelect,   // 양옆 버튼을 누르면 호출되는 함수
 }: StationNameplateProps) {
     const long = stationName.length >= LONG_NAME_LENGTH;
     const isUi = lineName === UI_LINE;

@@ -2,7 +2,7 @@ import type { CharacterPose, ScreenTone, VerdictScreenProps } from "@/types/ui";
 import { Character } from "@/ui/character/character";
 import { ScreenFrame } from "@/ui/shared/screen-frame";
 import { PlatformTimeSheet } from "./platform-time-sheet";
-import { CARD_AREA, STAGE } from "./screen-parts";
+import { cardAreaUnderSheet, STAGE } from "./screen-parts";
 import { TrainCard } from "./train-card";
 import { VerdictTitle } from "./verdict-title";
 
@@ -36,6 +36,7 @@ const POSE: Record<Verdict, CharacterPose> = {
  *
  * 시트: 「승강장까지」 줄을 누르면 페이지가 sheet.open을 true로 바꾸고, 시트가 열차 카드와 하단 캡슐을 덮으며 올라온다.
  * 판정 글자 · 캐릭터는 시트 위로 그대로 보여서, 시트에서 값을 바꾸면 뒤 판정이 바로 바뀌는 게 보인다.
+ * 시트가 열려 있는 동안 카드는 숨긴다 — 줄이 셋인 카드는 시트(300px)보다 높아서 위쪽이 시트 위로 남기 때문이다 (screen-parts.tsx cardAreaUnderSheet).
  */
 export function VerdictScreen({ nameplate, verdict, card, sheet, bottomNav }: VerdictScreenProps) {
     return (
@@ -46,7 +47,7 @@ export function VerdictScreen({ nameplate, verdict, card, sheet, bottomNav }: Ve
                 <Character pose={POSE[verdict]} />
             </div>
 
-            <div className={CARD_AREA}>
+            <div className={cardAreaUnderSheet(sheet.open)}>
                 <TrainCard {...card} />
             </div>
 

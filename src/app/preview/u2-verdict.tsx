@@ -5,7 +5,7 @@ import type { PlatformTimeSheetProps, VerdictScreenProps } from "@/types/ui";
 import { StationNameplate } from "@/ui/station/station-nameplate";
 import { VerdictScreen } from "@/ui/station/verdict-screen";
 import { VerdictTitle } from "@/ui/station/verdict-title";
-import { BoardTitle, BOTTOM_NAV, FullLink, Group, log, Phone, UnknownScreen, WRAP } from "./kit";
+import { BoardTitle, BOTTOM_NAV, FullLink, Group, log, PART_BASE, Phone, UnknownScreen, WRAP } from "./kit";
 import {
     ALL_CASES,
     DEMO_CASE,
@@ -184,9 +184,6 @@ function Board({ c }: { c: ScreenCase }) {
 
 /* ───────────────────────── 역명판 · 판정 글자만 따로 ───────────────────────── */
 
-/** 화면 틀 없이 부품만 놓는 칸에 주는 글자 기본값 — 화면 틀이 주는 것과 같다 (15px · 줄 높이 1.4 · 자간 −0.015em) */
-const PART_BASE = "text-15 leading-body tracking-body break-keep";
-
 /** 역명판은 화면 틀의 data-tone을 보고 색을 고른다. 틀이 없으니 바탕색과 data-tone을 여기서 직접 준다 */
 const PLATE_BG = {
     run: "bg-run",
@@ -234,8 +231,9 @@ export function U2VerdictPreview() {
             </h2>
             <p className="mt-1.5 max-w-245 text-13 font-semibold text-sub">
                 시안 design/v32.html과 나란히 놓고 봐요. 휴대폰 칸은 390 × 844, 작은 화면은 375 × 667이에요. 버튼을
-                누르면 브라우저 콘솔에 「[미리보기 …]」 로그가 찍혀요. 점선 캡슐은 U5가 채울 자리 표시예요. 「이
-                화면만 크게 보기」는 실제 페이지처럼 한 장만 띄워요 (DevTools 390 · 375 폭, PC 폭 확인용).
+                누르면 브라우저 콘솔에 「[미리보기 …]」 로그가 찍혀요. 하단 캡슐의 탭을 누르면 그 탭의 화면 한 장만
+                크게 보기로 가요. 「이 화면만 크게 보기」는 실제 페이지처럼 한 장만 띄워요 (DevTools 390 · 375 폭, PC
+                폭 확인용).
             </p>
 
             <Group

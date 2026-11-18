@@ -1,7 +1,7 @@
 /*
  * 시안 아이콘 — design/v32.html 스크립트 1절의 I에서 그림(path)과 크기 · 굵기를 그대로 옮긴 것.
- * 화면을 만든 U에서 쓰는 것만 있다 (U2: 꺾쇠 · 새로고침 · 위치 화살표, U3: − + · 다시 시도 · 열차 그림).
- * 나머지(검색 · 하단 캡슐 …)는 그 화면을 만드는 U에서 더한다.
+ * 화면을 만든 U에서 쓰는 것만 있다 (U2: 꺾쇠 · 새로고침 · 위치 화살표, U3: − + · 다시 시도 · 열차 그림,
+ * U5: 하단 캡슐의 탭 셋 · 줄 끝의 ›). 나머지(검색 …)는 그 화면을 만드는 U에서 더한다.
  *
  * props가 없어서 컴포넌트가 아니라 「그림 조각」이다. {chevronLeft}처럼 중괄호로 그대로 넣는다.
  * 색은 글자색(currentColor)을 따르고, 옆 글자가 뜻을 말하므로 화면 낭독기에는 읽히지 않게 한다 (aria-hidden).
@@ -151,5 +151,78 @@ export const trainOff = (
     >
         <rect x={4} y={3} width={16} height={15} rx={3} />
         <path d="M4 11h16M8 15h.01M16 15h.01M7 18l-2 3M17 18l2 3" />
+    </svg>
+);
+
+/** 하단 캡슐 「역 찾기」 탭 — 집 (20px, v32 I.home) */
+export const home = (
+    <svg
+        className="block flex-none"
+        width={20}
+        height={20}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2.2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+    >
+        <path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" />
+    </svg>
+);
+
+/** 하단 캡슐 「판정」 탭 — 번개 (20px, v32 I.bolt) */
+export const bolt = (
+    <svg
+        className="block flex-none"
+        width={20}
+        height={20}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2.2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+    >
+        <path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z" />
+    </svg>
+);
+
+/** 하단 캡슐 「설정」 탭 — 조절 막대 (20px, v32 I.sliders) */
+export const sliders = (
+    <svg
+        className="block flex-none"
+        width={20}
+        height={20}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2.2}
+        strokeLinecap="round"
+        aria-hidden="true"
+    >
+        <path d="M4 7h9M17 7h3M4 17h3M11 17h9" />
+        <circle cx={15} cy={7} r={2} />
+        <circle cx={9} cy={17} r={2} />
+    </svg>
+);
+
+/** 목록 줄 끝의 › — 설정 화면의 이름 줄 (18px, v32 I.chev). 역명판 · 「승강장까지」 줄의 ›(14px)보다 크고 가늘다 */
+export const rowChevron = (
+    <svg
+        className="block flex-none"
+        width={18}
+        height={18}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2.3}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+    >
+        <path d="M9 6l6 6-6 6" />
     </svg>
 );

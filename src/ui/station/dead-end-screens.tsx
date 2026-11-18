@@ -4,7 +4,7 @@ import { chevronLeft, chevronRight, retry, trainOff } from "@/ui/shared/icons";
 import { ScreenFrame } from "@/ui/shared/screen-frame";
 import { PlatformTimeRow } from "./platform-time-row";
 import { PlatformTimeSheet } from "./platform-time-sheet";
-import { CARD_AREA, standingStage, TITLE_AREA } from "./screen-parts";
+import { CARD_AREA, cardAreaUnderSheet, standingStage, TITLE_AREA } from "./screen-parts";
 import { VerdictTitle } from "./verdict-title";
 
 /*
@@ -57,7 +57,8 @@ export function EmptyScreen({ nameplate, platformTime, sheet, bottomNav }: Empty
             <VerdictTitle verdict="empty" />
             {standingStage}
 
-            <div className={CARD_AREA}>
+            {/* 시트가 열려 있는 동안 카드를 숨기는 것은 판정 화면과 같다 (이 카드는 시트보다 낮아서 눈에 보이는 차이는 없다) */}
+            <div className={cardAreaUnderSheet(sheet.open)}>
                 <div className="overflow-hidden rounded-[20px] bg-on-fill">
                     <PlatformTimeRow {...platformTime} />
 

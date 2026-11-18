@@ -129,7 +129,7 @@ export const SHEET_CASES: SheetCase[] = [
         kind: "sheet",
         id: "sheet-max",
         name: "가장 큰 값 (60분)",
-        note: "+가 꺼짐 (canIncrease: false) · 카드가 높은 「탈 열차가 아직 안 보여요」에서는 카드 위쪽이 시트 위로 남음",
+        note: "+가 꺼짐 (canIncrease: false) · 줄이 셋인 카드는 시트보다 높지만, 열려 있는 동안 카드를 숨겨서 시트 위로 안 남음",
         screen: "verdict",
         open: true,
         walkSec: 3600,

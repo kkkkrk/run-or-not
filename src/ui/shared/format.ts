@@ -1,6 +1,6 @@
 /*
- * 표시 형식 — 로직이 넘긴 숫자(초)를 화면 글자로 바꾸는 곳 (plan.md 1-2 「경계 판단 기준」)
- * 기준: design/결정.md 1절 · 4절, design/v32.html 스크립트 1절(fmt · fmtTrain · bigDur · r10)과 3절(rfLabel).
+ * 표시 형식 — 로직이 넘긴 숫자(초 · km/h)를 화면 글자로 바꾸는 곳 (plan.md 1-2 「경계 판단 기준」)
+ * 기준: design/결정.md 1절 · 4절, design/v32.html 스크립트 1절(fmt · fmtTrain · bigDur · r10) · 3절(rfLabel) · 5절(dur · valText · batchim).
  *
  * 여기에는 판정도 임계값 비교도 없다. 60초가 넘었는지(stale) 같은 비교는 로직이 끝내고 넘긴다.
  * 초는 소수로 들어올 수 있어서(ui.ts 맨 위 원칙) 글자로 쓰기 직전에 여기서 정수로 만든다.
@@ -60,4 +60,33 @@ export function formatTrainTime(sec: number): string {
 export function formatElapsed(sec: number): string {
     if (sec < 10) return "방금";
     return `${Math.floor(sec / 10) * 10}초 전`;
+}
+
+/**
+ * 초 → 「40초」 · 「1분」 · 「1분 30초」. formatDuration과 같은 규칙이고 분과 초 사이만 띄운다 (v32 스크립트 5절 dur).
+ * 설정에서 쓴다: 역 안 이동의 단계 이름, 「직접 · 1분 10초」, 시트의 비교 한 줄
+ */
+export function formatDurationSpaced(sec: number): string {
+    return durationParts(sec)
+        .map(({ value, unit }) => `${value}${unit}`)
+        .join(" ");
+}
+
+/**
+ * 속도(km/h) → 소수 한 자리 글자. 4.5 → 「4.5」 · 9 → 「9.0」 (v32 스크립트 5절 toFixed(1)).
+ * 설정의 「직접 · 시속 4.8km」와 시트의 큰 숫자가 쓴다. 단위(시속 … km · km/h)는 쓰는 곳에서 붙인다.
+ * 0.1씩 더하다 보면 4.799999999999999 같은 값이 올 수 있어서(4.5 + 0.1 + 0.1 + 0.1), 글자로 쓰기 직전에 여기서 한 자리로 만든다
+ */
+export function formatSpeed(kmh: number): string {
+    return kmh.toFixed(1);
+}
+
+/**
+ * 낱말이 받침 있는 한글로 끝나는지 — 뒤에 붙는 말을 고를 때 쓴다 (v32 스크립트 5절 batchim).
+ * 「보통」이에요 / 「빠르게」예요, 「보통」과 / 「빠르게」와. 한글이 아닌 글자로 끝나면 받침이 없는 것으로 본다
+ */
+export function endsWithBatchim(word: string): boolean {
+    const code = word.charCodeAt(word.length - 1);
+    // 한글 음절은 U+AC00(가)부터 28개씩 한 묶음이고, 묶음의 첫 글자(가 · 개 · 갸 …)만 받침이 없다
+    return code >= 0xac00 && code <= 0xd7a3 && (code - 0xac00) % 28 !== 0;
 }

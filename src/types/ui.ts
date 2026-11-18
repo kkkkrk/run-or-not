@@ -109,15 +109,15 @@ export type PlatformTimeRowProps = {
 /** 열차 줄 하나 — 이름(이번 열차 · 다음 열차)은 UI가 순서대로 붙인다 (결정.md 1절 · 3절) */
 export type TrainRow =
     | {
-          kind: Exclude<TrainKind, "miss">;
-          remainingSec: number;  // 도착까지 남은 초. UI가 「2분30초」로 쓴다
-          isTarget: boolean;     // 판정 대상(탈 수 있는 첫 열차) → 시간 글자와 아이콘이 커진다
-      }
+        kind: Exclude<TrainKind, "miss">;
+        remainingSec: number;  // 도착까지 남은 초. UI가 「2분30초」로 쓴다
+        isTarget: boolean;     // 판정 대상(탈 수 있는 첫 열차) → 시간 글자와 아이콘이 커진다
+    }
     | {
-          kind: "miss";          // 못 타는 열차 → 줄을 흐리게
-          remainingSec: number;
-          shortBySec: number;    // 뛰어도 모자란 초 (= 뛰면 − 남은 시간) → 「뛰어도 1분 부족」
-      };
+        kind: "miss";          // 못 타는 열차 → 줄을 흐리게
+        remainingSec: number;
+        shortBySec: number;    // 뛰어도 모자란 초 (= 뛰면 − 남은 시간) → 「뛰어도 1분 부족」
+    };
 
 /** 새로고침 글자 버튼 「방금 ↻」 — 첫 열차 줄의 이름 줄 오른쪽 끝 (결정.md 4절 「새로고침」 · 「재요청 실패」) */
 export type RefreshButtonProps = {
@@ -131,10 +131,10 @@ export type RefreshButtonProps = {
 /** 열차 카드 — 「승강장까지」 줄 + 열차 줄 + 새로고침 글자 + 대기 줄 (결정.md 1절 · 4절) */
 export type TrainCardProps = {
     platformTime: PlatformTimeRowProps;
-    trains: [TrainRow, ...TrainRow[]];        // 남은 시간이 짧은 순으로 1~2대 (0대면 EmptyScreenProps). 이미 떠난 열차는 빼고 넘긴다
+    trains: TrainRow[];        // 남은 시간이 짧은 순으로 1~2대 (0대면 EmptyScreenProps). 이미 떠난 열차는 빼고 넘긴다
     refresh: RefreshButtonProps;
     showPendingRow: boolean;   // 열차 줄 아래 「그다음 열차 · 이번 열차가 떠나면 보여요」 대기 줄 (탈 열차가 아직 안 보여요)
-                               // 판정이 "keep-walking"일 때만 true. 카드는 판정을 모르니 로직이 맞춰 넘기고 L3 테스트로 확인한다
+                                // 판정이 "keep-walking"일 때만 true. 카드는 판정을 모르니 로직이 맞춰 넘기고 L3 테스트로 확인한다
 };
 
 /* ───────────────────────── 5. 판정 화면 ───────────────────────── */
