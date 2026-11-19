@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useShallow } from "zustand/shallow";
 import { useNow } from "@/hooks/use-now";
@@ -23,6 +23,8 @@ import { LoadingScreen } from "@/ui/station/loading-screen";
 import { PlatformTimeAskScreen } from "@/ui/station/platform-time-ask-screen";
 import { EmptyScreen, LoadFailedScreen, OfflineScreen, StalledScreen } from "@/ui/station/dead-end-screens";
 import { VerdictScreen } from "@/ui/station/verdict-screen";
+import { useLastStationStore } from "@/stores/last-station-store";
+import { stationHref } from "@/lib/stations";
 
 // 아직 연결 안 한 콜백 자리. 5 · 6 · 7단계에서 하나씩 진짜 함수로 바꾼다
 const noop = () => {};
@@ -50,10 +52,18 @@ export function StationScreen({ station }: { station: StationWithNext }) {
             marginSec: s.marginSec,
         })),
     );
+
     const requestedDir = useSearchParams().get("dir") === "down" ? "down" : "up"; // 주소가 요청한 방면
     const oppositeDir = requestedDir === "up" ? "down" : "up";
     // 요청한 방면에 이웃 역이 없으면 반대쪽을 쓴다 (결정.md 1절 L3 메모)
     const dir = station.next[requestedDir] === null && station.next[oppositeDir] !== null ? oppositeDir : requestedDir;
+
+    const updateLastStation = useLastStationStore((s) => s.update);
+    const href = stationHref(station.id, dir); // 화면에 실제로 보이는 방면
+
+    useEffect(() => {
+        updateLastStation(href);
+    }, [href, updateLastStation]);
 
     const rightDir = (station.subwayId === "1002" || station.subwayId === "1009" || station.subwayId === "1092") ? "up" : "down";
     const [walkSec, setWalkSec] = useState<number | null>(null); // null = 아직 안 고름
@@ -85,16 +95,16 @@ export function StationScreen({ station }: { station: StationWithNext }) {
         stationName: station.name,
         lineName: station.lineName,
         lineColor: getLineColor(station.lineName),
-        left: (rightDir === "down") ? station.next.up : station.next.down,      // TODO(7단계): 왼쪽 · 오른쪽에 어느 방향을 둘지 (plan.md 7절)
+        left: (rightDir === "down") ? station.next.up : station.next.down,   
         right: (rightDir === "up") ? station.next.up : station.next.down,
         selected: (station.next.up === null) ? "right" : ((dir === "up" && rightDir === "up") || (dir === "down" && rightDir === "down")) ? "right" : "left",
-        onSelect,             // TODO(7단계): ?dir 바꾸기
+        onSelect,            
     };
     const bottomNav: BottomNavProps = {
         active: "verdict",
         searchHref: "/",
         settingsHref: "/settings",
-        verdictHref: `/station/${station.id}`, // 임시 (L4에서 정함)
+        verdictHref: href, 
     };
 
     // ── 3. 화면 이름 → 화면 ──

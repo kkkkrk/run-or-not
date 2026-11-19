@@ -39,3 +39,7 @@ export function searchStations(query: string, limit = 20) {
 
     return rst.slice(0,limit);
 }
+
+export function stationHref(stationId: string, dir: "up" | "down"): string {
+    return `/station/${stationId}?dir=${dir}`;
+}
