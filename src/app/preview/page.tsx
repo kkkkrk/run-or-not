@@ -4,6 +4,7 @@ import { U1CharacterPreview } from "./u1-character";
 import { U2FullScreen, U2VerdictPreview } from "./u2-verdict";
 import { isU3Screen } from "./u3-cases";
 import { U3FullScreen, U3ScreensPreview } from "./u3-screens";
+import { U4BrandPreview } from "./u4-brand";
 import { isU5Screen } from "./u5-cases";
 import { U5FullScreen, U5SettingsPreview } from "./u5-settings";
 
@@ -11,7 +12,8 @@ export const metadata: Metadata = { title: "미리보기" };
 
 /**
  * UI 미리보기 — 새 화면(src/ui)의 모든 상태를 가짜 데이터로 띄워 보는 곳 (plan.md 1-2 · 1-3).
- * U마다 묶음 파일이 하나씩 붙는다 (u1-character.tsx · u2-verdict.tsx · u3-screens.tsx · u5-settings.tsx …). 가짜 데이터와 가짜 상태는 이 폴더 안에만 둔다.
+ * U마다 묶음 파일이 하나씩 붙는다 (u1-character.tsx · u2-verdict.tsx · u3-screens.tsx · u4-brand.tsx · u5-settings.tsx …). 가짜 데이터와 가짜 상태는 이 폴더 안에만 둔다.
+ * U4 묶음만 화면이 아니라 파일(파비콘 · 홈 화면 아이콘 · 공유 이미지)을 띄운다 — 한 장만 크게 보기가 없다.
  *
  *   /preview              전체 목록
  *   /preview?screen=이름   화면 한 장만, 실제 페이지처럼 브라우저 가득 (이름은 u2-cases.ts · u3-cases.ts · u5-cases.ts의 id)
@@ -47,6 +49,10 @@ export default async function PreviewPage({ searchParams }: PageProps<"/preview"
                         U3 · 시트 · 판정 전 · 막다른 화면 · 로딩
                     </a>
                     {" · "}
+                    <a href="#u4-title" className="underline underline-offset-[3px]">
+                        U4 · 파비콘 · 홈 화면 아이콘 · 카톡 미리보기
+                    </a>
+                    {" · "}
                     <a href="#u5-title" className="underline underline-offset-[3px]">
                         U5 · 하단 캡슐 · 설정 화면 · 설정 시트
                     </a>
@@ -55,6 +61,7 @@ export default async function PreviewPage({ searchParams }: PageProps<"/preview"
             </div>
             <U2VerdictPreview />
             <U3ScreensPreview />
+            <U4BrandPreview />
             <U5SettingsPreview />
         </div>
     );
