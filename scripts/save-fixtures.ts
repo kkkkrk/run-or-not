@@ -31,6 +31,7 @@ const TARGETS: readonly Target[] = [
     { file: "sungshin-ui", apiName: "성신여대입구", why: "우이신설선 · barvlDt가 1초 단위 카운트다운" },
     { file: "kkachisan", apiName: "까치산", why: "2호선(1002) 행이 오는지 확인 → ROW_OVERRIDES 2519" },
     { file: "info-200-gongneung", apiName: "공릉", why: "INFO-200 · 역명 불일치 (정식 역명은 공릉(서울산업대입구))" },
+    { file: "eungam-6", apiName: "응암순환(상선)", why: "6호선 응암 순환 · 상행 · 하행 열차가 각각 어디서 오는지 → build-stations NEXT_OVERRIDES 응암" },
 ];
 
 // ── 저장 파일 모양 ─────────────────────────────────────────────

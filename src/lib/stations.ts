@@ -2,21 +2,22 @@
 // 역 조회·검색. 서버(page·route)와 브라우저(검색·즐겨찾기) 양쪽에서 import한다
 // → 'server-only'를 붙이지 않는다. React·스토어·브라우저 API를 import하지 않는다
 import stationsJson from "@/data/stations.json";
-import type { Station } from "@/types/subway";
+import type { StationWithNext } from "@/types/subway";
 
-export const allStations: Station[] = stationsJson;
+// stations.json의 역마다 방향별 다음 역(next)이 들어 있다 (scripts/build-stations.ts) → 역명판 양옆 칸
+export const allStations: StationWithNext[] = stationsJson;
 /** 비교용 문자열로 바꾼다. 역 이름과 검색어에 같은 규칙을 쓴다 */
 function normalize(text: string): string {
     return text.replace(/[^가-힣0-9a-zA-Z]/g, '').toLowerCase();
 }
 
 /** 역마다 정규화한 키를 로드 때 한 번 계산해 둔다. 검색할 때마다 다시 만들지 않기 위함 */
-const searchIndex: { station: Station; key: string }[] = allStations.map((station)=>{
+const searchIndex: { station: StationWithNext; key: string }[] = allStations.map((station)=>{
     return {station: station, key: normalize(station.name)}
 });
 
 /** id로 역 하나를 찾는다. 없으면 undefined (404 판단은 부른 쪽이 한다) */
-export function getStation(id: string): Station | undefined { 
+export function getStation(id: string): StationWithNext | undefined {
     return allStations.find((station)=> (station.id === id))
 }
 
@@ -37,4 +38,8 @@ export function searchStations(query: string, limit = 20) {
     
 
     return rst.slice(0,limit);
+}
+
+export function stationHref(stationId: string, dir: "up" | "down"): string {
+    return `/station/${stationId}?dir=${dir}`;
 }

@@ -4,6 +4,114 @@
 @import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 @theme {
   --font-sans: "Pretendard Variable", Pretendard, system-ui, sans-serif;
+
+  /* ================= 뛸까말까 디자인 토큰 (plan.md U0) =================
+     기준: design/결정.md 2절(색). 결정.md에 숫자가 없는 값은 시안 v32의 CSS에서 가져왔다 (줄마다 표시).
+     여기 적은 이름이 Tailwind 클래스가 된다: --color-walk → bg-walk · text-walk, --text-verdict → text-verdict.
+     아무 데서도 쓰지 않은 토큰은 빌드 결과에 나오지 않는다. */
+
+  /* 1) 상태색 (결정.md 2절) — 판정 화면은 화면 전체가 이 색 하나(플랫).
+        -strong = 상태색 + 검정 22%. 흰 면 위에 올리는 글자색 */
+  --color-slow: #2979DE;           /* 천천히 걸어요 */
+  --color-slow-strong: #205EAD;
+  --color-walk: #1E9B50;           /* 걸어도 돼요 */
+  --color-walk-strong: #17793E;
+  --color-run: #E0352B;            /* 지금 뛰어요! */
+  --color-run-strong: #AF2922;     /* 흰 화면(역 찾기 · 설정)의 빨강 포인트 글자도 이 색 */
+  --color-tight: #B31237;          /* 빨리 뛰어봐요! (아슬아슬) */
+  --color-tight-strong: #8C0E2B;
+  --color-miss: #6D4AE0;           /* 탈 열차가 아직 안 보여요 */
+  --color-miss-strong: #553AAF;
+  /* 막다른 화면(열차가 없어요 · 불러오기 실패 · 오프라인 · 판정 멈춤). 결정.md의 --none · --none-strong.
+     이름만 deadend로 바꿨다: --color-none이라고 쓰면 fill-none · border-none · bg-none에 이 색이 섞여 나온다 */
+  --color-deadend: #5F6E82;
+  --color-deadend-strong: #4A5665;
+
+  /* 2) 흰 화면 — 역 찾기 · 설정 · 판정 전(로딩 · 승강장까지 몇 분?) · 흰 시트 (결정.md 2절) */
+  --color-canvas: #F1F5F9;         /* 흰 화면 바탕 */
+  --color-ink: #0F172A;            /* 본문 */
+  --color-sub: #475569;            /* 보조 */
+  --color-faint: #94A3B8;          /* 흐린 글자 */
+  --color-line: #E2E8F0;           /* 구분선 */
+  --color-surface: #FFFFFF;        /* 카드 · 시트 면 (시안 v32 --surface) */
+  --color-fill: #F1F5F9;           /* 카드 안 작은 면 — 단계 버튼 바탕 · 칩 (시안 v32 --fill) */
+  /* 하단 캡슐 (시안 v32 --nav-bg · --nav-border). 이름을 nav가 아니라 capsule로 지었다:
+     --color-nav라고 쓰면 text-nav가 색이 되어 아래 4)의 글자 토큰 --text-nav(11px)를 덮는다 */
+  --color-capsule: rgb(255 255 255 / 0.88);       /* 캡슐 바탕 — surface와 달리 뒤가 살짝 비친다 */
+  --color-capsule-line: rgb(15 23 42 / 0.08);     /* 캡슐 테두리 */
+
+  /* 3) 상태색 화면 위 — 글자 · 카드 · 캡슐은 전부 흰색 계열 (결정.md 2절. 값은 시안 v32 .on-color) */
+  --color-on-ink: #FFFFFF;                      /* 본문 */
+  --color-on-sub: rgb(255 255 255 / 0.9);       /* 보조 */
+  --color-on-faint: rgb(255 255 255 / 0.72);    /* 흐린 글자 */
+  --color-on-line: rgb(255 255 255 / 0.22);     /* 구분선 */
+  --color-on-surface: rgb(255 255 255 / 0.16);  /* 작은 밝은 면 */
+  --color-on-fill: rgb(0 0 0 / 0.14);           /* 카드 바탕 (어두운 면) */
+  --color-on-capsule: rgb(0 0 0 / 0.2);                /* 하단 캡슐 바탕 — 카드 바탕(on-fill 14%)보다 진하다 (시안 v32 .on-color --nav-bg) */
+  --color-on-capsule-line: rgb(255 255 255 / 0.16);    /* 하단 캡슐 테두리 (시안 v32 .on-color --nav-border) */
+
+  /* 4) 글자 단계 — 큰 글자 (시안 v32 CSS 5 · 7 · 8 · 10 · 11절).
+        이름 하나에 크기 + 줄 높이 + 자간 + 굵기가 같이 들어 있다 (text-verdict 하나면 넷이 다 걸린다).
+        cqh = 화면(컨테이너) 높이의 1%. 화면 뿌리에 container-type: size를 주면 그 높이를, 없으면 브라우저 화면 높이를 쓴다 */
+  --text-verdict: clamp(37px, 5.75cqh, 49px);       /* 판정 글자. 높이 844에서 48.5px (결정.md 4절) */
+  --text-verdict--line-height: 1.08;
+  --text-verdict--letter-spacing: -0.045em;
+  --text-verdict--font-weight: 900;
+  --text-verdict-long: clamp(29px, 4.5cqh, 38px);   /* 막다른 화면의 두 줄 제목 (인터넷 연결을 / 확인해 주세요) */
+  --text-verdict-long--line-height: 1.16;
+  --text-verdict-long--letter-spacing: -0.045em;
+  --text-verdict-long--font-weight: 900;
+  --text-train-target: clamp(38px, 5.2cqh, 46px);   /* 판정 대상 열차의 남은 시간 */
+  --text-train-target--line-height: 0.96;
+  --text-train-target--letter-spacing: -0.05em;
+  --text-train-target--font-weight: 800;
+  --text-train: 24px;                               /* 그 밖 열차의 남은 시간 */
+  --text-train--line-height: 1;
+  --text-train--letter-spacing: -0.03em;
+  --text-train--font-weight: 800;
+  --text-sheet-value: 44px;                         /* 시트 가운데 큰 숫자 */
+  --text-sheet-value--line-height: 1;
+  --text-sheet-value--letter-spacing: -0.045em;
+  --text-sheet-value--font-weight: 900;
+  --text-sheet-unit: 20px;                          /* 큰 숫자 옆 단위 (분 · 초 · km/h) */
+  --text-sheet-unit--letter-spacing: -0.02em;
+  --text-sheet-unit--font-weight: 800;
+  --text-wordmark: 21px;                            /* 흰 화면 맨 위 이름 (뛸까말까 · 설정) */
+  --text-wordmark--letter-spacing: -0.04em;
+  --text-wordmark--font-weight: 900;
+  --text-nav: 11px;                                 /* 하단 캡슐 탭 이름 */
+  --text-nav--letter-spacing: -0.02em;
+  --text-nav--font-weight: 700;
+
+  /* 5) 글자 단계 — 작은 글자 (시안 v32 CSS 3 ~ 12절에서 실제로 쓰는 크기). 크기만 있고 이름이 곧 px다:
+        text-12 · text-12.5 · text-13 … (12.5 같은 소수는 변수 이름에서만 점 대신 _) */
+  --text-10: 10px;        /* 호선 배지의 「우이」 (결정.md 1절 — U2에서 더함) */
+  --text-12: 12px;        /* 「승강장까지」 · 「또는 직접 고르기」 */
+  --text-12_5: 12.5px;    /* 열차 이름 · 「뛰어도 N 부족」 · 새로고침 글자 · 걸으면 · 뛰면 · 안내 한 줄 */
+  --text-13: 13px;        /* 시트 설명 · 「뛰면 N · 자동 계산」 · 처음 값으로 · 다른 역 찾기 */
+  --text-13_5: 13.5px;    /* 역명판 양옆 역 · 흰 면 버튼(다시 시도 · 반대 방면 보기) */
+  --text-14: 14px;        /* 완료 · 설정 단계 버튼 */
+  --text-14_5: 14.5px;    /* 칩 · 역명판 가운데 역(7자 이상) */
+  --text-15: 15px;        /* 화면 기본 글자 · 설정 항목 이름 */
+  --text-15_5: 15.5px;    /* 막다른 화면 설명 · 위치 확인 중 한 줄 · 「내 위치로 계산하기」 */
+  --text-16: 16px;        /* 걸으면 · 뛰면 숫자 · 시트 제목 */
+  --text-16_5: 16.5px;    /* 역명판 가운데 역 */
+
+  /* 6) 굵기 · 자간 · 줄 높이 — Tailwind 기본에 없는 값만 (시안 v32 CSS 3 · 4절).
+        굵기는 기본 이름을 쓴다: font-semibold 600 · font-bold 700 · font-extrabold 800 · font-black 900 */
+  --font-weight-heavy: 850;        /* 역명판 가운데 역 이름 (font-heavy) */
+  --tracking-body: -0.015em;       /* 화면 기본 자간 */
+  --tracking-num: -0.03em;         /* 숫자 (tabular-nums와 같이 쓴다) */
+  --leading-body: 1.4;             /* 화면 기본 줄 높이 */
+
+  /* 7) 움직임 — 캐릭터 말고 움직이는 것은 새로고침 아이콘과 로딩 스켈레톤이다. (시트가 올라오는 전환은 sheet-frame.tsx에 있다)
+        animate-refresh-spin: 받는 동안 0.7초에 한 바퀴씩 계속 돈다 (결정.md 4절 「새로고침」, 시안 v32 CSS 7절 .rf-spin — U2에서 더함)
+        animate-skeleton: 스켈레톤 위로 밝은 띠가 1.4초에 한 번 지나간다 (시안 v32 CSS 7절 .skel의 shimmer — U3에서 더함).
+                          이름을 shimmer로 짓지 않았다: shadcn/tailwind.css에 이미 shimmer라는 유틸리티가 있다 */
+  --animate-refresh-spin: refresh-spin 0.7s linear infinite;
+  @keyframes refresh-spin { to { transform: rotate(360deg); } }
+  --animate-skeleton: skeleton-shimmer 1.4s infinite;
+  @keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 }
 
 
@@ -19,6 +127,11 @@ button, a {
 :root { --background: oklch(1 0 0); --foreground: oklch(0.145 0 0); --card: oklch(1 0 0); --card-foreground: oklch(0.145 0 0); --popover: oklch(1 0 0); --popover-foreground: oklch(0.145 0 0); --primary: oklch(0.205 0 0); --primary-foreground: oklch(0.985 0 0); --secondary: oklch(0.97 0 0); --secondary-foreground: oklch(0.205 0 0); --muted: oklch(0.97 0 0); --muted-foreground: oklch(0.556 0 0); --accent: oklch(0.97 0 0); --accent-foreground: oklch(0.205 0 0); --destructive: oklch(0.577 0.245 27.325); --border: oklch(0.922 0 0); --input: oklch(0.922 0 0); --ring: oklch(0.708 0 0); --chart-1: oklch(0.87 0 0); --chart-2: oklch(0.556 0 0); --chart-3: oklch(0.439 0 0); --chart-4: oklch(0.371 0 0); --chart-5: oklch(0.269 0 0); --radius: 0.625rem; --sidebar: oklch(0.985 0 0); --sidebar-foreground: oklch(0.145 0 0); --sidebar-primary: oklch(0.205 0 0); --sidebar-primary-foreground: oklch(0.985 0 0); --sidebar-accent: oklch(0.97 0 0); --sidebar-accent-foreground: oklch(0.205 0 0); --sidebar-border: oklch(0.922 0 0); --sidebar-ring: oklch(0.708 0 0); }
 
 .dark { --background: oklch(0.145 0 0); --foreground: oklch(0.985 0 0); --card: oklch(0.205 0 0); --card-foreground: oklch(0.985 0 0); --popover: oklch(0.205 0 0); --popover-foreground: oklch(0.985 0 0); --primary: oklch(0.922 0 0); --primary-foreground: oklch(0.205 0 0); --secondary: oklch(0.269 0 0); --secondary-foreground: oklch(0.985 0 0); --muted: oklch(0.269 0 0); --muted-foreground: oklch(0.708 0 0); --accent: oklch(0.269 0 0); --accent-foreground: oklch(0.985 0 0); --destructive: oklch(0.704 0.191 22.216); --border: oklch(1 0 0 / 10%); --input: oklch(1 0 0 / 15%); --ring: oklch(0.556 0 0); --chart-1: oklch(0.87 0 0); --chart-2: oklch(0.556 0 0); --chart-3: oklch(0.439 0 0); --chart-4: oklch(0.371 0 0); --chart-5: oklch(0.269 0 0); --sidebar: oklch(0.205 0 0); --sidebar-foreground: oklch(0.985 0 0); --sidebar-primary: oklch(0.488 0.243 264.376); --sidebar-primary-foreground: oklch(0.985 0 0); --sidebar-accent: oklch(0.269 0 0); --sidebar-accent-foreground: oklch(0.985 0 0); --sidebar-border: oklch(1 0 0 / 10%); --sidebar-ring: oklch(0.556 0 0); }
+
+/* 글꼴 바로잡기 (U0): 위 @theme inline의 `--font-sans: var(--font-sans)`가 맨 위 @theme의 Pretendard 정의를 덮어써서
+   --font-sans가 자기 자신을 가리키게 됐고(순환 → 값 없음), 글꼴이 브라우저 기본 글꼴로 떨어지고 있었다.
+   shadcn 변수는 그대로 두고, shadcn이 색을 주는 방식대로 실제 값을 :root에 직접 준다. */
+:root { --font-sans: "Pretendard Variable", Pretendard, system-ui, sans-serif; }
 
 @layer base {
   * {

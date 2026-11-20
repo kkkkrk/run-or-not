@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import { StationView } from "@/components/verdict/station-view"
+// import { StationView } from "@/components/verdict/station-view"
 import { getStation } from "@/lib/stations";
 import { notFound } from "next/navigation";
+import { StationScreen } from "./station-screen";
 
 export async function generateMetadata(
     props: PageProps<"/station/[id]">,
@@ -20,6 +21,6 @@ export default async function StationPage({params}: PageProps<"/station/[id]">){
         notFound();
     }
     return(
-        <StationView station={station}/>
+        <StationScreen station={station}/>
     )
 }

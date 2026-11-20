@@ -10,17 +10,23 @@ function tick() {
     listeners.forEach((listener) => listener());
 }
 
+function onVisibilityChange() {
+    if (document.visibilityState === "visible") tick();
+}
+
 function subscribe(onStoreChange: () => void): () => void {
     listeners.add(onStoreChange);
     if (timer === undefined) {
-        current = Date.now(); // 다시 구독할 때 오래된 값이 남지 않게
         timer = setInterval(tick, 1000);
+        document.addEventListener("visibilitychange", onVisibilityChange);
     }
     return () => {
         listeners.delete(onStoreChange);
         if (listeners.size === 0) {
             clearInterval(timer);
             timer = undefined;
+            document.removeEventListener("visibilitychange", onVisibilityChange);
+            current = null;
         }
     };
 }

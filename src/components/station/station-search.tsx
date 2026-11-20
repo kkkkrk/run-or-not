@@ -1,5 +1,5 @@
 'use client'
-import { useId, useState, type KeyboardEvent } from "react"
+import { useId, useState, type KeyboardEvent, type FormEvent } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Search } from "lucide-react"
@@ -48,9 +48,15 @@ export function StationSearch() {
         }
     }
 
+    function handleSubmit(e: FormEvent<HTMLFormElement>){
+        e.preventDefault();
+        if(active < 0 ) return;
+        router.push(stationHref(results[active].id))
+    }
+
     return (
         <div className="flex flex-col gap-3">
-            <div className="relative">
+            <form role="search" onSubmit={handleSubmit} className= "relative">
                 <Search aria-hidden className="pointer-events-none absolute left-5 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
                 <Input
                     type="search"
@@ -72,7 +78,7 @@ export function StationSearch() {
                     onKeyDown={handleKeyDown}
                     className="h-14 rounded-full border-2 border-gray-200 bg-white pl-13 pr-5 text-lg md:text-lg focus-visible:border-slate-400"
                 />
-            </div>
+            </form>
 
             {expanded ? (
                 <ul id={listId} role="listbox" aria-label="검색 결과">
