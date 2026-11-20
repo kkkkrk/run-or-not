@@ -260,7 +260,7 @@ export function U3ScreensPreview() {
 
             <Group
                 title="「승강장까지」 시트"
-                note="전부 눌러 볼 수 있어요. 「승강장까지」 줄을 누르면 올라오고, 완료 · Esc · 시트 바깥(위쪽 화면)을 누르면 내려가요. − · + · 칩을 누르면 뒤의 판정 글자 · 색 · 캐릭터가 바로 바뀌어요 (가짜 계산 — 실제는 L3). 열리면 포커스가 시트로 들어가고 Tab은 시트 안에서만 돌아요. 「내 위치로 계산하기」 줄은 U7에서 채워요."
+                note="전부 눌러 볼 수 있어요. 「승강장까지」 줄을 누르면 올라오고, 완료 · Esc · 시트 바깥(위쪽 화면)을 누르면 내려가요. − · + · 칩을 누르면 뒤의 판정 글자 · 색 · 캐릭터가 바로 바뀌어요 (가짜 계산 — 실제는 L3). 열리면 포커스가 시트로 들어가고 Tab은 시트 안에서만 돌아요 — 키보드로 목록을 넘기다 열린 예시에 들어가면 Esc로 닫고 지나가요. 「내 위치로 계산하기」 줄은 U7에서 채워요."
             >
                 {boards(SHEET_CASES)}
             </Group>
@@ -300,5 +300,6 @@ export function U3ScreensPreview() {
 export function U3FullScreen({ id }: { id: string }) {
     const found = U3_CASES.find((c) => c.id === id);
     if (!found) return <UnknownScreen id={id} />;
-    return found.kind === "sheet" ? <SheetFull c={found} /> : <StaticScreen c={found} />;
+    // key: 다른 시트 예시로 옮겨 가면 새로 만들어서 그 예시의 처음 값 · 처음 시트 상태로 시작한다 (없으면 앞 예시에서 바꾼 값이 남는다)
+    return found.kind === "sheet" ? <SheetFull key={found.id} c={found} /> : <StaticScreen c={found} />;
 }

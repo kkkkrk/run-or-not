@@ -23,6 +23,31 @@ export const BOTTOM_NAV: BottomNavProps = {
 };
 
 /**
+ * 휴대폰 칸을 처음 그리는 동안만 「꺼 두었다가」(inert) 다 그려지면 켠다 — 칸의 ref다.
+ *
+ * 왜: 시트는 열린 채로 그려지면 포커스를 자기에게 옮긴다. 실제 화면에서는 맞는 동작이다 (src/ui/shared/sheet-frame.tsx).
+ * 그런데 목록에는 처음부터 열린 예시가 여러 장이라, 그대로 두면 예시들이 차례로 포커스를 가져간다.
+ * 그러면 목록을 열자마자 첫 Tab이 맨 위 바로가기가 아니라 목록 한가운데 시트의 「완료」로 가고,
+ * 예시 하나를 닫으면 포커스가 「그 전에 포커스를 갖고 있던」 다른 예시의 시트로 튄다 (U5 검토 1번).
+ * 꺼 둔 칸 안의 요소는 포커스를 받을 수 없어서, 그리는 동안에는 포커스가 움직이지 않는다.
+ *
+ * 순서: React는 안쪽 요소의 ref를 먼저 부르고 바깥 요소의 ref를 나중에 부른다. 그래서 이 함수가 불릴 때는
+ * 안의 시트들이 포커스를 옮기려다 실패한 뒤다 → 여기서 켠다. 켠 뒤로는 평소처럼 눌러 볼 수 있다.
+ * 뒷정리에서 다시 꺼 두는 까닭: 개발 모드(StrictMode)는 처음 그릴 때 ref를 한 번 떼었다가 다시 붙인다.
+ * 켜진 채로 다시 붙이면 그때 시트들이 포커스를 가져간다.
+ * JSX에는 inert가 늘 켜져 있다고 적혀 있고 실제 값은 이 함수만 바꾼다 (React는 바뀌지 않은 속성을 다시 쓰지 않는다).
+ *
+ * 한 장만 크게 볼 때(/preview?screen=…)는 이 칸이 없다 → 실제 화면처럼 열린 시트가 포커스를 받는다.
+ */
+function wakeAfterMount(phone: HTMLDivElement | null) {
+    if (!phone) return;
+    phone.inert = false;
+    return () => {
+        phone.inert = true;
+    };
+}
+
+/**
  * 휴대폰 크기 칸 (390 × 844, 작은 화면은 375 × 667 — v32의 .phone).
  * 화면 틀은 원래 브라우저 화면 높이(100dvh)를 쓴다. 여러 장을 한 페이지에 늘어놓으려고
  * 이 칸 안에서만 틀(<main>)의 높이를 칸 높이로 덮어쓴다 ([&>main]:h-full!).
@@ -32,6 +57,8 @@ export const BOTTOM_NAV: BottomNavProps = {
 export function Phone({ small, children }: { small: boolean; children: ReactNode }) {
     return (
         <div
+            ref={wakeAfterMount}
+            inert
             className={`relative flex-none overflow-hidden shadow-[0_0_0_1px_rgb(15_23_42/0.12),0_10px_28px_rgb(15_23_42/0.12)] [&>main]:h-full! ${
                 small ? "h-166.75 w-93.75 rounded-[26px]" : "h-211 w-97.5 rounded-[30px]"
             }`}

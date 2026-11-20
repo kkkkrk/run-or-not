@@ -77,8 +77,10 @@ function holdFocusInSheet(marker: HTMLElement | null) {
  *   - 아래 여백 28px (pb-7)
  *   - 제목 줄: 설명이 두 줄이어도 완료 버튼이 위에 있게 위로 맞추고(items-start), 제목 덩어리와 버튼 사이 14px (gap-3.5)
  *   - 제목 자간 −0.02em
- *   - 완료 글자의 자간: 화면 기본 자간(−0.015em)을 따른다. 「승강장까지」 시트의 완료는 자간 0이다
- *     (v32에서 버튼 글자는 자간 0이고, 설정 화면만 본문 자간을 물려받는다 — CSS 3절 .screen[data-set] button)
+ *   - 완료 글자의 자간: 화면 틀의 자간을 그대로 물려받는다 (inherit) — 15px 본문에서 계산된 −0.225px이다.
+ *     tracking-body(−0.015em)를 버튼에 직접 주면 버튼 글자 크기 14px로 다시 계산돼 −0.21px이 된다 (U5 검토 3번에서 고침).
+ *     「승강장까지」 시트의 완료는 자간 0이다
+ *     (v32에서 버튼 글자는 자간 0이고, 설정 화면만 본문 자간을 물려받는다 — CSS 3절 .screen[data-set] button { letter-spacing: inherit })
  * 설명(description)의 줄바꿈 글자(\n)는 그대로 줄을 바꾼다 (whitespace-pre-line) — 「여유」의 설명이 두 줄이다.
  */
 export function SheetFrame({ open, onOpenChange, title, description, children }: SheetFrameProps) {
@@ -148,7 +150,7 @@ export function SheetFrame({ open, onOpenChange, title, description, children }:
                     <button
                         type="button"
                         onClick={close}
-                        className="h-11 flex-none cursor-pointer rounded-full bg-ink px-4.5 text-14 font-extrabold tracking-normal text-white in-data-[sheet=setting]:tracking-body"
+                        className="h-11 flex-none cursor-pointer rounded-full bg-ink px-4.5 text-14 font-extrabold tracking-normal text-white in-data-[sheet=setting]:tracking-[inherit]"
                     >
                         완료
                     </button>

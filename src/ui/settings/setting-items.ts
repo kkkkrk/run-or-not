@@ -9,7 +9,7 @@ import { formatDurationSpaced, formatSpeed } from "@/ui/shared/format";
  * 전부 props로 받는다 (ui.ts SettingItem). 단계 값을 바꿔도 이 파일은 그대로다.
  */
 
-/** 카드에 놓는 순서 — 위에서부터 걷기 속도 · 뛰기 속도 · 역 안 이동 · 여유 */
+/** 카드에 놓는 순서 — 위에서부터 walk · run · station · margin */
 export const SETTING_KEYS: SettingKey[] = ["walk", "run", "station", "margin"];
 
 type SettingWords = {
@@ -63,7 +63,7 @@ export const SETTING: Record<SettingKey, SettingWords> = {
 };
 
 /**
- * 세 단계의 이름. 역 안 이동만 이름이 따로 없고 단계 값을 그대로 쓴다 — 받은 steps로 만들어서, 단계 값이 바뀌면 이름도 따라 바뀐다
+ * 단계 버튼 세 개에 뭐라고 쓸까. 역 안 이동만 이름이 따로 없고 단계 값을 그대로 쓴다 — 받은 steps로 만들어서, 단계 값이 바뀌면 이름도 따라 바뀐다
  * (40 · 60 · 90초 → 「40초」 · 「1분」 · 「1분 30초」)
  */
 export function stepNamesOf(key: SettingKey, item: SettingItem): [string, string, string] {
@@ -71,7 +71,7 @@ export function stepNamesOf(key: SettingKey, item: SettingItem): [string, string
     return SETTING[key].stepNames ?? [formatDurationSpaced(low), formatDurationSpaced(mid), formatDurationSpaced(high)];
 }
 
-/** 값을 한 줄 글자로 — 「시속 4.8km」 · 「1분 10초」. 단계에 없는 값일 때 이름 줄 오른쪽 「직접 · 값」에 쓴다 (v32 valText) */
+/**이 숫자를 어떻게 읽어줄까 — 「시속 4.8km」 · 「1분 10초」. 단계에 없는 값일 때 이름 줄 오른쪽 「직접 · 값」에 쓴다 (v32 valText) */
 export function valueText(key: SettingKey, value: number): string {
     return SETTING[key].unit === "speed" ? `시속 ${formatSpeed(value)}km` : formatDurationSpaced(value);
 }

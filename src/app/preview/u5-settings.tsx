@@ -278,7 +278,7 @@ export function U5SettingsPreview() {
 
             <Group
                 title="설정 시트"
-                note="「승강장까지」 시트와 같은 모양에 칩 대신 비교 한 줄. 뒤가 어둡게 덮여요. − · +를 누르면 큰 숫자 · 비교 한 줄과 뒤 화면의 단계 버튼이 같이 바뀌어요. 완료 · Esc · 시트 바깥(어두운 곳)으로 닫혀요. 열리면 포커스가 시트로 들어가고 Tab은 시트 안에서만 돌아요. 범위(− +가 꺼지는 값)는 v32 그림의 예시 값이에요."
+                note="「승강장까지」 시트와 같은 모양에 칩 대신 비교 한 줄. 뒤가 어둡게 덮여요. − · +를 누르면 큰 숫자 · 비교 한 줄과 뒤 화면의 단계 버튼이 같이 바뀌어요. 완료 · Esc · 시트 바깥(어두운 곳)으로 닫혀요. 열리면 포커스가 시트로 들어가고 Tab은 시트 안에서만 돌아요 — 키보드로 목록을 넘기다 열린 예시에 들어가면 Esc로 닫고 지나가요. 범위(− +가 꺼지는 값)는 v32 그림의 예시 값이에요."
             >
                 {settingsBoards(SETTING_SHEET_CASES)}
             </Group>
@@ -307,5 +307,7 @@ export function U5FullScreen({ id }: { id: string }) {
 
     const found = U5_CASES.find((c) => c.id === id);
     if (!found) return <UnknownScreen id={id} />;
-    return <SettingsFull c={found} />;
+    // key: 캡슐로 다른 설정 예시로 옮겨 가면(주소의 screen이 바뀌면) 새로 만들어서 그 예시의 처음 값 · 처음 시트 상태로 시작한다.
+    // 없으면 같은 컴포넌트가 이어져서 앞 예시에서 바꾼 값이 남는다 (U5 검토 2번). 같은 주소(현재 탭)를 누르면 key가 같아 값이 그대로다
+    return <SettingsFull key={found.id} c={found} />;
 }
