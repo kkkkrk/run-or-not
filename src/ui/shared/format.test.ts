@@ -5,11 +5,14 @@ import { describe, expect, it } from "vitest";
 import {
     durationParts,
     endsWithBatchim,
+    formatDistance,
+    formatDistanceLimit,
     formatDuration,
     formatDurationSpaced,
     formatElapsed,
     formatSpeed,
     formatTrainTime,
+    lineBadgeText,
     roundTo10,
 } from "./format";
 
@@ -216,9 +219,98 @@ describe("endsWithBatchim — 뒤에 붙는 말 고르기 (이에요 / 예요, �
         expect(endsWithBatchim("힣")).toBe(true);
     });
 
-    it("한글이 아닌 글자로 끝나거나 빈 글자면 받침이 없는 것으로 본다", () => {
+    it("숫자로 끝나면 읽는 소리로 본다 — 영 · 일 · 삼 · 육 · 칠 · 팔은 받침이 있다 (역 찾기의 결과 없음 문구, U6)", () => {
+        for (const word of ["종로0", "종로1", "을지로3", "종로6", "종로7", "종로8"]) expect(endsWithBatchim(word)).toBe(true);
+        for (const word of ["종로2", "을지로4", "을지로5", "종로9"]) expect(endsWithBatchim(word)).toBe(false);
+    });
+
+    it("0으로 끝나는 수는 십 · 백으로 읽어도 받침이 있다", () => {
+        expect(endsWithBatchim("30")).toBe(true);
+        expect(endsWithBatchim("100")).toBe(true);
+    });
+
+    it("영문 · 기호 · 낱자로 끝나거나 빈 글자면 받침이 없는 것으로 본다", () => {
         expect(endsWithBatchim("km")).toBe(false);
-        expect(endsWithBatchim("30")).toBe(false);
+        expect(endsWithBatchim("4.")).toBe(false);
+        expect(endsWithBatchim("ㄱ")).toBe(false);
         expect(endsWithBatchim("")).toBe(false);
+    });
+
+    it("v39 그림의 검색어: 「홍데」와 · 「강남」과", () => {
+        expect(endsWithBatchim("홍데")).toBe(false);
+        expect(endsWithBatchim("강남")).toBe(true);
+    });
+});
+
+describe("formatDistance — 가까운 역 줄의 거리", () => {
+    it("v39 그림의 값: 320m · 780m", () => {
+        expect(formatDistance(320)).toBe("320m");
+        expect(formatDistance(780)).toBe("780m");
+    });
+
+    it("1km가 안 되면 10m 단위로 반올림한다 (5부터 올림)", () => {
+        expect(formatDistance(324)).toBe("320m");
+        expect(formatDistance(325)).toBe("330m");
+        expect(formatDistance(4)).toBe("0m");
+        expect(formatDistance(5)).toBe("10m");
+    });
+
+    it("1km부터는 km로 소수 한 자리 — 딱 떨어져도 .0을 쓴다", () => {
+        expect(formatDistance(1000)).toBe("1.0km");
+        expect(formatDistance(1100)).toBe("1.1km");
+        expect(formatDistance(2000)).toBe("2.0km");
+        expect(formatDistance(12340)).toBe("12.3km");
+    });
+
+    it("경계: 994m는 「990m」, 995m부터는 「1000m」가 아니라 「1.0km」", () => {
+        expect(formatDistance(994)).toBe("990m");
+        expect(formatDistance(995)).toBe("1.0km");
+        expect(formatDistance(999)).toBe("1.0km");
+    });
+
+    it("km는 한 번만 반올림한다 — 1049m는 「1.0km」, 1050m는 「1.1km」", () => {
+        expect(formatDistance(1049)).toBe("1.0km");
+        expect(formatDistance(1050)).toBe("1.1km");
+        expect(formatDistance(1150)).toBe("1.2km"); // 1.15.toFixed(1)은 「1.1」이 된다 — 그렇게 계산하지 않는다
+    });
+
+    it("소수는 가까운 값으로, 음수는 0m로", () => {
+        expect(formatDistance(319.6)).toBe("320m");
+        expect(formatDistance(-20)).toBe("0m");
+    });
+});
+
+describe("formatDistanceLimit — 「2km 안에 판정할 수 있는 역이 없어요」의 거리", () => {
+    it("v39 그림의 값: 2000m → 「2km」 (소수 없이)", () => {
+        expect(formatDistanceLimit(2000)).toBe("2km");
+        expect(formatDistanceLimit(1000)).toBe("1km");
+    });
+
+    it("딱 떨어지지 않으면 formatDistance와 같다", () => {
+        expect(formatDistanceLimit(1500)).toBe("1.5km");
+        expect(formatDistanceLimit(800)).toBe("800m");
+    });
+
+    it("10km가 넘어도 끝의 .0만 뗀다 — 「10km」 · 「20.5km」", () => {
+        expect(formatDistanceLimit(10000)).toBe("10km");
+        expect(formatDistanceLimit(20500)).toBe("20.5km");
+    });
+});
+
+describe("lineBadgeText — 호선 배지 글자", () => {
+    it("「N호선」은 숫자만", () => {
+        expect(lineBadgeText("2호선")).toBe("2");
+        expect(lineBadgeText("7호선")).toBe("7");
+        expect(lineBadgeText("9호선")).toBe("9");
+    });
+
+    it("우이신설선만 「우이」 (결정.md 1절)", () => {
+        expect(lineBadgeText("우이신설선")).toBe("우이");
+    });
+
+    it("정해진 모양이 없는 노선은 빈 글자 → 색 원만 그려진다", () => {
+        expect(lineBadgeText("신분당선")).toBe("");
+        expect(lineBadgeText("경의중앙선")).toBe("");
+        expect(lineBadgeText("")).toBe("");
     });
 });

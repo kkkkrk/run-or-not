@@ -6,6 +6,7 @@ import { KONKUK, type Station, type Trains, type Verdict } from "./u2-cases";
  *
  * 숫자는 design/v32.html의 그림(스크립트 4절 「눌러지는 판정 화면」 · 6절 WAIT)과 같게 맞췄다.
  * 콜백과 가짜 상태(시트 열림 · 고른 시간)는 여기 없고 u3-screens.tsx에 있다.
+ * 호선 색(lineColor)은 결정.md 2절 「호선 색」 표의 값이다 (U6에서 옛 공식 색을 바꿨다).
  */
 
 /* ───────────────────────── 역 ───────────────────────── */
@@ -17,7 +18,7 @@ const KONKUK_LEFT: Station = { ...KONKUK, selected: "left" };
 const OGEUM: Station = {
     stationName: "오금",
     lineName: "3호선",
-    lineColor: "#EF7C1C",
+    lineColor: "#FF8939",
     left: "경찰병원",
     right: null,
     selected: "left",
@@ -27,7 +28,7 @@ const OGEUM: Station = {
 const SINDANG: Station = {
     stationName: "신당",
     lineName: "2호선",
-    lineColor: "#00A84D",
+    lineColor: "#3CB44A",
     left: "동대문역사문화공원",
     right: "상왕십리",
     selected: "right",
@@ -37,7 +38,7 @@ const SINDANG: Station = {
 const DDP: Station = {
     stationName: "동대문역사문화공원",
     lineName: "2호선",
-    lineColor: "#00A84D",
+    lineColor: "#3CB44A",
     left: "을지로4가",
     right: "신당",
     selected: "right",

@@ -253,11 +253,8 @@ export const SETTING_SHEET_CASES: SettingsCase[] = [
     },
 ];
 
-/** 역 찾기 자리 — 화면은 U6에서 만든다. 지금은 흰 화면 틀에 캡슐만 붙은 모습을 본다 */
-export const SEARCH_PLACE_ID = "search";
-
 /** 주소(?screen=…)로 한 장만 크게 볼 때 찾는 목록 */
 export const U5_CASES: SettingsCase[] = [...SETTINGS_CASES, ...SETTING_SHEET_CASES];
 
 /** 주소의 이름이 U5 화면인지 — page.tsx가 어느 묶음에서 찾을지 정할 때 쓴다 */
-export const isU5Screen = (id: string) => id === SEARCH_PLACE_ID || U5_CASES.some((c) => c.id === id);
+export const isU5Screen = (id: string) => U5_CASES.some((c) => c.id === id);

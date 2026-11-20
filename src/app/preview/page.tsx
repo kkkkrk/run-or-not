@@ -7,17 +7,19 @@ import { U3FullScreen, U3ScreensPreview } from "./u3-screens";
 import { U4BrandPreview } from "./u4-brand";
 import { isU5Screen } from "./u5-cases";
 import { U5FullScreen, U5SettingsPreview } from "./u5-settings";
+import { isU6Screen } from "./u6-cases";
+import { U6FullScreen, U6SearchPreview } from "./u6-search";
 
 export const metadata: Metadata = { title: "미리보기" };
 
 /**
  * UI 미리보기 — 새 화면(src/ui)의 모든 상태를 가짜 데이터로 띄워 보는 곳 (plan.md 1-2 · 1-3).
- * U마다 묶음 파일이 하나씩 붙는다 (u1-character.tsx · u2-verdict.tsx · u3-screens.tsx · u4-brand.tsx · u5-settings.tsx …). 가짜 데이터와 가짜 상태는 이 폴더 안에만 둔다.
+ * U마다 묶음 파일이 하나씩 붙는다 (u1-character.tsx · u2-verdict.tsx · u3-screens.tsx · u4-brand.tsx · u5-settings.tsx · u6-search.tsx). 가짜 데이터와 가짜 상태는 이 폴더 안에만 둔다.
  * U4 묶음만 화면이 아니라 파일(파비콘 · 홈 화면 아이콘 · 공유 이미지)을 띄운다 — 한 장만 크게 보기가 없다.
  *
  *   /preview              전체 목록
- *   /preview?screen=이름   화면 한 장만, 실제 페이지처럼 브라우저 가득 (이름은 u2-cases.ts · u3-cases.ts · u5-cases.ts의 id)
- *                         하단 캡슐의 탭도 이 주소로 이어져 있다: search(역 찾기 자리) · demo(판정) · settings(설정)
+ *   /preview?screen=이름   화면 한 장만, 실제 페이지처럼 브라우저 가득 (이름은 u2-cases.ts · u3-cases.ts · u5-cases.ts · u6-cases.ts의 id)
+ *                         하단 캡슐의 탭도 이 주소로 이어져 있다: search(역 찾기) · demo(판정) · settings(설정) — 셋 다 눌러 보는 화면
  */
 export default async function PreviewPage({ searchParams }: PageProps<"/preview">) {
     // VERCEL_ENV는 Vercel이 넣어 주는 값이다: production(실제 주소) · preview(브랜치 주소) · development.
@@ -27,6 +29,7 @@ export default async function PreviewPage({ searchParams }: PageProps<"/preview"
     // 한 장만 볼 때는 아무것도 감싸지 않는다 — layout.tsx의 가운데 600px 칸 안에 화면 컴포넌트만 놓인다 (실제 역 페이지와 같은 조건)
     const { screen } = await searchParams;
     if (typeof screen === "string") {
+        if (isU6Screen(screen)) return <U6FullScreen id={screen} />;
         if (isU5Screen(screen)) return <U5FullScreen id={screen} />;
         return isU3Screen(screen) ? <U3FullScreen id={screen} /> : <U2FullScreen id={screen} />;
     }
@@ -56,6 +59,10 @@ export default async function PreviewPage({ searchParams }: PageProps<"/preview"
                     <a href="#u5-title" className="underline underline-offset-[3px]">
                         U5 · 하단 캡슐 · 설정 화면 · 설정 시트
                     </a>
+                    {" · "}
+                    <a href="#u6-title" className="underline underline-offset-[3px]">
+                        U6 · 역 찾기 화면 · 호선 배지 새 색
+                    </a>
                 </p>
                 <U1CharacterPreview />
             </div>
@@ -63,6 +70,7 @@ export default async function PreviewPage({ searchParams }: PageProps<"/preview"
             <U3ScreensPreview />
             <U4BrandPreview />
             <U5SettingsPreview />
+            <U6SearchPreview />
         </div>
     );
 }

@@ -1,8 +1,9 @@
 /*
- * 표시 형식 — 로직이 넘긴 숫자(초 · km/h)를 화면 글자로 바꾸는 곳 (plan.md 1-2 「경계 판단 기준」)
- * 기준: design/결정.md 1절 · 4절, design/v32.html 스크립트 1절(fmt · fmtTrain · bigDur · r10) · 3절(rfLabel) · 5절(dur · valText · batchim).
+ * 표시 형식 — 로직이 넘긴 숫자(초 · km/h · m)와 호선 이름을 화면 글자로 바꾸는 곳 (plan.md 1-2 「경계 판단 기준」)
+ * 기준: design/결정.md 1절 · 4절 · 6절, 시안 스크립트 1절(fmt · fmtTrain · bigDur · r10) · 3절(rfLabel) · 4절(dist) · 5절(dur · valText · batchim).
+ * (시안 = design/v39.html. v32 때 만든 것은 주석에 v32라고 적혀 있다 — 그 부분은 v39에 그대로 들어 있다)
  *
- * 여기에는 판정도 임계값 비교도 없다. 60초가 넘었는지(stale) 같은 비교는 로직이 끝내고 넘긴다.
+ * 여기에는 판정도 임계값 비교도 없다. 60초가 넘었는지(stale) · 2km 안에 역이 있는지 같은 비교는 로직이 끝내고 넘긴다.
  * 초는 소수로 들어올 수 있어서(ui.ts 맨 위 원칙) 글자로 쓰기 직전에 여기서 정수로 만든다.
  */
 
@@ -81,12 +82,58 @@ export function formatSpeed(kmh: number): string {
     return kmh.toFixed(1);
 }
 
+/** 읽었을 때 받침 소리로 끝나는 숫자: 0(영) · 1(일) · 3(삼) · 6(육) · 7(칠) · 8(팔). 10 · 20처럼 0으로 끝나는 수(십 · 백 · 천)도 받침이 있다 */
+const DIGITS_WITH_BATCHIM = "013678";
+
 /**
- * 낱말이 받침 있는 한글로 끝나는지 — 뒤에 붙는 말을 고를 때 쓴다 (v32 스크립트 5절 batchim).
- * 「보통」이에요 / 「빠르게」예요, 「보통」과 / 「빠르게」와. 한글이 아닌 글자로 끝나면 받침이 없는 것으로 본다
+ * 낱말이 받침 소리로 끝나는지 — 뒤에 붙는 말을 고를 때 쓴다 (v32 스크립트 5절 batchim).
+ * 「보통」이에요 / 「빠르게」예요, 「보통」과 / 「빠르게」와, 「강남」과 / 「홍데」와 맞는 역이 없어요.
+ * 숫자로 끝나면 읽는 소리로 본다: 「종로6」과(육) · 「을지로5」와(오). 시안의 코드는 숫자를 받침 없음으로 보지만(「종로6」와),
+ * 틀린 조사가 나와서 읽는 소리대로 하기로 했다 (2026-11-20 영준 확인).
+ * 그 밖의 글자(영문 · 기호 · 낱자 「ㄱ」)로 끝나거나 빈 글자면 받침이 없는 것으로 본다
  */
 export function endsWithBatchim(word: string): boolean {
-    const code = word.charCodeAt(word.length - 1);
+    if (word === "") return false;
+    const last = word[word.length - 1];
+    if (DIGITS_WITH_BATCHIM.includes(last)) return true;
+
+    const code = last.charCodeAt(0);
     // 한글 음절은 U+AC00(가)부터 28개씩 한 묶음이고, 묶음의 첫 글자(가 · 개 · 갸 …)만 받침이 없다
     return code >= 0xac00 && code <= 0xd7a3 && (code - 0xac00) % 28 !== 0;
+}
+
+/**
+ * 거리(m) → 「320m」 · 「1.1km」 — 가까운 역 줄의 오른쪽 끝 (결정.md 6절, v39 스크립트 4절 dist).
+ * 1km가 안 되면 10m 단위로 반올림하고, 그 위는 km로 소수 한 자리까지 쓴다 (딱 떨어져도 「2.0km」).
+ * 어느 쪽으로 쓸지는 10m로 반올림한 값으로 정한다 — 996m는 「1000m」가 아니라 「1.0km」다 (시안의 dist는 「1000m」가 된다).
+ * km 숫자는 반올림한 값이 아니라 받은 값에서 바로 구한다 (1049m를 1050m로 올린 뒤 다시 올리면 「1.1km」가 돼 버린다)
+ */
+export function formatDistance(meters: number): string {
+    const rounded = Math.max(0, Math.round(meters / 10) * 10);
+    if (rounded < 1000) return `${rounded}m`;
+    return `${(Math.round(meters / 100) / 10).toFixed(1)}km`;
+}
+
+/**
+ * 「가까이에 없다」고 본 거리(m) → 「2km」 · 「1.5km」 · 「800m」 — 「2km 안에 판정할 수 있는 역이 없어요」의 앞 글자 (결정.md 6절, v39 화면 10).
+ * formatDistance와 같은 규칙이고, 딱 떨어지는 km만 소수 없이 쓴다 (그림의 「2km」) — 잰 거리가 아니라 정해 둔 기준 값이라서
+ */
+export function formatDistanceLimit(meters: number): string {
+    return formatDistance(meters).replace(".0km", "km");
+}
+
+/**
+ * 배지에 숫자 대신 「우이」를 쓰는 하나뿐인 노선. 노선색(#B0CE18)이 밝아서 글자색도 이 노선만 짙다 (결정.md 1절).
+ * 배지를 그리는 곳(역명판 · 역 찾기 목록 줄)이 글자 모양을 바꿀 때 이 이름과 견준다
+ */
+export const UI_LINE = "우이신설선";
+
+/**
+ * 호선 배지에 쓸 글자 (결정.md 1절): 「7호선」 → 「7」, 우이신설선만 「우이」.
+ * 그 밖의 이름(아직 없는 노선)은 정해진 모양이 없어서 빈 글자다 → 글자 없이 노선색 원만 그려진다.
+ * 역명판 배지(24px)와 역 찾기 목록 배지(26px)가 같이 쓴다 (U2 때는 역명판 파일 안에 있었다)
+ */
+export function lineBadgeText(lineName: string): string {
+    if (lineName === UI_LINE) return "우이";
+    return /^(\d+)호선$/.exec(lineName)?.[1] ?? "";
 }
