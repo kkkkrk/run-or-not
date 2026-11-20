@@ -18,8 +18,11 @@
  *   「승강장까지」 시트는 VerdictScreenProps · EmptyScreenProps 안의 sheet(PlatformTimeSheetProps)로 받고, 화면이 시트까지 그린다.
  *   설정 시트도 같다: SettingsScreenProps 안의 sheet(SettingSheetProps)로 받고, 설정 화면이 시트까지 그린다 (2026-11-18 추가).
  *
+ * 역 찾기(첫 화면 "/")는 StationSearchScreenProps 하나다. 검색창 아래가 처음 화면(묶음 둘) · 결과 카드 · 결과 없음 가운데
+ *   무엇인지는 그 안의 results로, 「가까운 역」 묶음의 상태는 nearby로 갈린다 (11절).
+ *
  * 차례: 1 공통 · 2 역명판 · 3 판정 글자와 캐릭터 · 4 열차 카드 · 5 판정 화면 · 6 「승강장까지」 시트
- *       7 판정 전 화면 · 8 막다른 화면 · 9 하단 캡슐 · 10 설정 · 11 역 찾기(자리만) · 12 틀(UI 안에서만)
+ *       7 판정 전 화면 · 8 막다른 화면 · 9 하단 캡슐 · 10 설정 · 11 역 찾기 · 12 틀(UI 안에서만)
  */
 
 import type { ReactNode } from "react";
@@ -300,11 +303,77 @@ export type SettingSheetProps = {
     onIncrease: () => void;
 };
 
-/* ───────────────────────── 11. 역 찾기 (자리만) ───────────────────────── */
+/* ───────────────────────── 11. 역 찾기 ───────────────────────── */
+// U6 ① 초안 (2026-11-20). 이 절은 맨 위 「확정」 줄에 역 찾기 날짜가 붙으면 확정이다 (plan.md U6 ①).
+// 「화면 N」은 design/v39.html 「역 찾기」 묶음의 번호다 (결정.md 6절과 같은 번호).
+// 로직이 끝내고 넘기는 것: 검색 · 정렬 · 일치 범위 · 거리 계산 · 「가까이에 없음」 판단 · 검색창 아래에 무엇을 보일지(처음 화면 | 결과 | 결과 없음).
+// UI가 쓰는 것: 「320m」 · 「1.1km」 · 「○○ 방면」 · 「7호선」 · 배지 글자(7 · 우이) · 조사(와 · 과) · 낭독용 이름 · 말줄임.
 
-/** 역 찾기 화면 — 이름만 둔 자리. 시안(plan.md S)을 정한 뒤 U6에서 채운다 (결정.md 5절) */
+/** 목록 줄의 공통 값 — 호선 배지 + 역 이름. 결과 · 가까운 역 · 최근 본 역 줄이 모두 가진다 (화면 1 · 2 · 4, 결정.md 6절 「목록 줄 모양은 하나다」) */
+export type StationRowBase = {
+    stationId: string;    // 역 id = (역, 호선) 하나 (예: "2718-1007"). 줄 하나 = 역 id 하나. 줄을 누르면 콜백에 그대로 돌려준다
+    stationName: string;  // 화면에 보이는 역 이름 「공릉」. 길면 UI가 이름 쪽만 말줄임한다
+    lineName: string;     // 「7호선」 · 「우이신설선」. UI가 배지 글자(7 · 우이) · 결과 줄 오른쪽 끝 「7호선」 · 낭독용 이름에 쓴다
+    lineColor: string;    // 배지 면 색. 역명판의 lineColor와 같은 값을 받는다 (색 표는 로직 쪽 한 곳, 결정.md 2절 「호선 색」)
+};
+
+/** 검색 결과 줄 — 배지 · 역 이름(일치한 글자는 빨강) · 오른쪽 끝 「5호선」 (화면 4 · 5 · 6, 결정.md 6절 「검색」) */
+export type SearchResultRow = StationRowBase & {
+    matchStart: number;   // 일치한 글자가 시작하는 자리. stationName(화면에 보이는 원래 이름)에서 0부터 센 글자 번호
+    matchLength: number;  // 일치한 글자 수. 「공」으로 찾은 「김포공항」 → 2 · 1, 「민주」로 찾은 「4.19민주묘지」 → 4 · 2. 0이면 칠하지 않는다
+};
+
+/** 최근 본 역 줄 — 배지 · 역 이름 · 오른쪽 끝 「○○ 방면」 (화면 1, 결정.md 6절 「최근 본 역」) */
+export type RecentStationRow = StationRowBase & {
+    direction: Direction;   // 전에 본 방면. 줄을 누르면 onSelectRecent에 그대로 돌려준다 → 그 방면 판정으로 바로
+    directionName: string;  // 그 방면의 다음 역 이름 「태릉입구」 (이웃 역 데이터의 이름). UI가 「태릉입구 방면」으로 쓴다
+};
+
+/** 가까운 역 줄 — 배지 · 역 이름 · 오른쪽 끝 거리. 방면은 쓰지 않는다 (화면 2, 결정.md 6절 「가까운 역」) */
+export type NearbyStationRow = StationRowBase & {
+    distanceM: number;  // 내 위치에서 역까지 (m). UI가 1km 미만은 10m 단위 「320m」, 그 위는 「1.1km」로 쓴다
+};
+
+/** 검색창 아래에 그릴 것 — 처음 화면의 묶음 둘 · 결과 카드 · 결과 없음 가운데 하나 (화면 1 · 4 ~ 7, 결정.md 6절 「검색」) */
+export type StationSearchResults =
+    | { status: "idle" }                                                       // 찾는 중이 아니다 → 「가까운 역」 · 「최근 본 역」 묶음 (화면 1)
+    | { status: "list"; rows: SearchResultRow[]; activeIndex: number | null }  // 결과 카드 (화면 4 · 5 · 6)
+    | { status: "none" };                                                      // 결과 없음 → 카드 안 한 줄 「「○○」와 맞는 역이 없어요」 (화면 7)
+// 어느 상태인지는 로직이 정한다 — UI는 query가 비었는지를 보고 고르지 않는다 (빈 문자열 · 공백뿐이면 "idle", plan.md L5 스펙 2).
+// rows = 위에서부터 그릴 순서 그대로 (앞 글자가 맞는 역 먼저 — 정렬은 로직). 1줄 이상이고, 0줄이면 "none"으로 넘긴다
+// activeIndex = ↑↓로 고른 줄 번호(0부터). 화살표를 아직 안 썼으면 null → 고른 줄 표시가 없다 (화면 5는 ↓ 두 번 = 1).
+//   rows 범위를 벗어난 번호는 null처럼 그린다
+// "none"의 ○○ = 화면 props의 query에서 앞뒤 공백만 뗀 글자. 조사(와 · 과)는 UI가 끝 글자의 받침으로 고른다
+
+/** 「가까운 역」 묶음의 상태 — 검색창 아래 · 최근 본 역 위, 같은 자리에서 내용만 바뀐다 (화면 1 · 2 · 8 · 9 · 10, 결정.md 6절 「가까운 역」) */
+export type NearbyStations =
+    | { status: "hidden" }                          // 묶음 없음 — 제목 · 줄 · 안내 없이 최근 본 역만 (위치를 붙이기 전, plan.md L5 스펙 9)
+    | { status: "idle" }                            // 허용 전 — 「내 위치로 찾기」 줄 + 꺾쇠. 누르면 onFindNearby (화면 1)
+    | { status: "locating" }                        // 확인 중 — 같은 줄이 「내 위치 확인 중…」. 꺾쇠가 없고 누를 수 없다 (화면 8)
+    | { status: "list"; rows: NearbyStationRow[] }  // 목록 — 가까운 순서 그대로 (정렬 · 개수는 로직). 1줄 이상 (화면 2)
+    | { status: "none"; radiusM: number }           // 가까이에 없음 — 카드 안 한 줄 「2km 안에 판정할 수 있는 역이 없어요」 (화면 10)
+    | { status: "denied" };                         // 거부 — 묶음이 통째로 빠지고 안내 한 줄이 최근 본 역 아래에 (화면 9)
+// radiusM = 「가까이에 없다」고 본 거리 (m). 비교는 로직이 하고, UI는 문구 앞의 거리 글자로만 쓴다 (2000 → 「2km」)
+// "denied"이면서 최근 본 역이 0줄인 조합(처음 연 사람이 거부)의 모양은 아직 안 정했다 (결정.md 5절, plan.md 7절 「U7 전」)
+
+/** 역 찾기 화면 — 위에서부터 검색창 → 「가까운 역」 묶음 → 「최근 본 역」 묶음 → 하단 캡슐. 글자를 치면 묶음 대신 결과 카드 (화면 1 ~ 10, 결정.md 6절) */
 export type StationSearchScreenProps = {
-    bottomNav: BottomNavProps;
+    query: string;                                    // 검색창에 보이는 글자 그대로 (조합 중인 글자 · 공백 포함). 비어 있지 않으면 지우기 버튼(×)이 생긴다
+    onQueryChange: (query: string) => void;           // 글자가 바뀔 때마다 (한글 조합 중에도 매번)
+    onClearQuery: () => void;                         // 지우기 버튼(×)을 눌렀을 때. 그 뒤 포커스는 UI가 검색창으로 돌려놓는다
+    onComposingChange: (composing: boolean) => void;  // 한글 조합 시작(true) · 끝(false)
+    onArrowDown: () => void;                          // 검색창에서 ↓
+    onArrowUp: () => void;                            // 검색창에서 ↑
+    onEnter: () => void;                              // 검색창에서 Enter · 휴대폰 키보드의 「검색」. 어느 줄로 갈지는 로직 (고른 줄, 없으면 첫 줄)
+                                                      // ↓ · ↑ · Enter는 한글 조합 중에 눌린 것이면 UI가 넘기지 않는다 (그 키는 조합을 끝내는 데 쓰인다)
+    results: StationSearchResults;                    // 검색창 아래에 그릴 것. "idle"일 때만 아래 nearby · recent 묶음이 보인다
+    onSelectStation: (stationId: string) => void;     // 결과 줄 · 가까운 역 줄을 눌렀을 때. 어느 방면으로 열지는 로직 (전에 본 방면)
+    nearby: NearbyStations;                           // 「가까운 역」 묶음
+    onFindNearby: () => void;                         // 「내 위치로 찾기」 줄을 눌렀을 때 (nearby가 "idle"일 때만 불린다)
+    recent: RecentStationRow[] | null;                // 「최근 본 역」 묶음, 위에서부터 그릴 순서 그대로. 0줄이면 제목 · 목록 대신 안내 한 줄 (화면 3)
+                                                      // 아직 모르면(저장값 복원 전) null → 제목 · 줄 · 안내 없이 자리를 비운다 (plan.md 7절 「U6 ① 전」 제안대로)
+    onSelectRecent: (stationId: string, direction: Direction) => void;  // 최근 본 역 줄을 눌렀을 때 → 그 방면 판정으로 바로
+    bottomNav: BottomNavProps;                        // 「역 찾기」가 현재 탭
 };
 
 /* ───────────────────────── 12. 틀 (UI 안에서만 쓰는 조립용 — 페이지는 쓰지 않는다) ───────────────────────── */
