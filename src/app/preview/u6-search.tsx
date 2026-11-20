@@ -18,7 +18,7 @@ import {
     RECENT_CHOICES,
     SMALL_CASES,
     U6_CASES,
-    UNDECIDED_CASES,
+    LOCATION_CASES,
     V39_CASES,
     type SearchCase,
 } from "./u6-cases";
@@ -324,10 +324,10 @@ export function U6SearchPreview() {
             </Group>
 
             <Group
-                title="아직 모양을 안 정한 조합"
-                note="처음 연 사람이 위치를 거부하면 안내 한 줄이 둘이 돼요. 결정.md 5절 · plan.md 7절 「U7 전」에 남아 있어서, 지금은 꾸미지 않고 차례로 놓기만 했어요. L5 동안은 「가까운 역」이 묶음 없음이라 실제로는 나오지 않아요."
+                title="위치를 못 쓸 때 (U7)"
+                note="시안 v40에서 고른 모습이에요 (결정.md 6절). 위치를 못 찾으면(시간 초과 · 사용 불가) 「내 위치로 찾기」 줄을 남기고 카드 아래에 한 줄 — 줄을 다시 누를 수 있어요. 미지원이면 거부와 같은 모양에 문구만 달라요. 처음 연 사람과 겹치면 안내 두 줄이 차례로 놓여요. L5 동안은 「가까운 역」이 묶음 없음이라 실제로는 나오지 않아요 (L6에서 붙음)."
             >
-                {boards(UNDECIDED_CASES)}
+                {boards(LOCATION_CASES)}
             </Group>
 
             <Group

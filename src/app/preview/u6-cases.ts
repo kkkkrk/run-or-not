@@ -380,31 +380,79 @@ export const SMALL_CASES: SearchCase[] = [
 ];
 
 /**
- * 모양을 아직 안 정한 조합 — 처음 연 사람이 위치를 거부했을 때 (결정.md 5절, plan.md 7절 「U7 전」).
- * 지금은 꾸미지 않고 두 안내 줄을 차례로 놓기만 한다 (2026-11-20 영준 확인). 눈으로 볼 수 있게만 둔다
+ * 위치를 못 쓸 때 (U7 — 결정.md 6절 「가까운 역」 · 「최근 본 역」, 시안 v40의 1-A · 2-A · 3-A).
+ * 못 찾음은 줄을 남기고 카드 아래 한 줄, 미지원은 거부와 같은 모양에 문구만, 처음 연 사람과 겹치면 안내 두 줄을 차례로
  */
-export const UNDECIDED_CASES: SearchCase[] = [
+export const LOCATION_CASES: SearchCase[] = [
+    {
+        id: "search-failed",
+        name: "위치를 못 찾았을 때",
+        note: "nearby failed (시간 초과 · 사용 불가) → 「내 위치로 찾기」 줄 그대로 + 카드 아래 10px에 한 줄 (v40 2-A)",
+        query: "",
+        results: IDLE,
+        nearby: { status: "failed" },
+        recent: RECENT,
+    },
+    {
+        id: "search-unsupported",
+        name: "위치를 쓸 수 없는 브라우저",
+        note: "nearby unsupported → 거부와 같은 모양, 문구만 다름 (v40 3-A)",
+        query: "",
+        results: IDLE,
+        nearby: { status: "unsupported" },
+        recent: RECENT,
+    },
     {
         id: "search-first-denied",
-        name: "처음 연 사람 + 위치 거부 (임시)",
-        note: "recent 0줄 + nearby denied → 안내 두 줄이 차례로. 모양은 U7 전에 정함",
+        name: "처음 연 사람 + 위치 거부",
+        note: "recent 0줄 + nearby denied → 안내 두 줄을 차례로 (v40 1-A)",
         query: "",
         results: IDLE,
         nearby: { status: "denied" },
         recent: [],
+    },
+    {
+        id: "search-first-unsupported",
+        name: "처음 연 사람 + 미지원",
+        note: "거부와 같은 차례 — 아랫줄만 미지원 안내",
+        query: "",
+        results: IDLE,
+        nearby: { status: "unsupported" },
+        recent: [],
+    },
+    {
+        id: "search-first-failed",
+        name: "처음 연 사람 + 못 찾음",
+        note: "줄 + 못 찾음 한 줄, 그 아래 「역을 한 번 보면…」",
+        query: "",
+        results: IDLE,
+        nearby: { status: "failed" },
+        recent: [],
+    },
+    {
+        id: "search-failed-small",
+        name: "못 찾았을 때 — 375 × 667",
+        note: "한 줄이 더해져도 최근 본 역 4줄이 캡슐 위에 보이는지",
+        small: true,
+        query: "",
+        results: IDLE,
+        nearby: { status: "failed" },
+        recent: RECENT,
     },
 ];
 
 /** 눌러 보기 — 주소 이름이 search라서 하단 캡슐의 「역 찾기」 탭이 여기로 온다 (kit.tsx BOTTOM_NAV) */
 export const DEMO_ID = "search";
 
-/** 눌러 보기에서 고를 수 있는 「가까운 역」 상태 — 타입의 여섯 가지 전부 */
+/** 눌러 보기에서 고를 수 있는 「가까운 역」 상태 — 타입의 여덟 가지 전부 */
 export const NEARBY_CHOICES: { label: string; value: NearbyStations }[] = [
     { label: "허용 전", value: { status: "idle" } },
     { label: "확인 중", value: { status: "locating" } },
     { label: "목록", value: { status: "list", rows: NEAR } },
     { label: "가까이에 없음", value: { status: "none", radiusM: 2000 } },
     { label: "거부", value: { status: "denied" } },
+    { label: "못 찾음", value: { status: "failed" } },
+    { label: "미지원", value: { status: "unsupported" } },
     { label: "묶음 없음", value: { status: "hidden" } },
 ];
 
@@ -416,7 +464,7 @@ export const RECENT_CHOICES: { label: string; value: RecentStationRow[] | null }
 ];
 
 /** 주소(?screen=…)로 한 장만 크게 볼 때 찾는 목록 */
-export const U6_CASES: SearchCase[] = [...V39_CASES, ...EXTRA_CASES, ...LONG_CASES, ...SMALL_CASES, ...UNDECIDED_CASES];
+export const U6_CASES: SearchCase[] = [...V39_CASES, ...EXTRA_CASES, ...LONG_CASES, ...SMALL_CASES, ...LOCATION_CASES];
 
 /** 주소의 이름이 U6 화면인지 — page.tsx가 어느 묶음에서 찾을지 정할 때 쓴다 */
 export const isU6Screen = (id: string) => id === DEMO_ID || U6_CASES.some((c) => c.id === id);

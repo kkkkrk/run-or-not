@@ -8,7 +8,7 @@ import { LIST, locateRowBody, matchedName, rowBox, stationRowBody } from "./stat
 /** 묶음 제목 「가까운 역」 · 「최근 본 역」 (v39 .sec): 13px / 700 · 보조색, 여백 위 18 · 좌우 31 · 아래 8px */
 const GROUP_TITLE = "px-7.75 pt-4.5 pb-2 text-13 font-bold tracking-normal text-sub";
 
-/** 안내 한 줄 (v39 .line1): 13.5px / 600 · 보조색 · 좌우 31px. 위 여백은 쓰는 곳에서 준다 (처음 연 사람 16px · 위치 거부 14px) */
+/** 안내 한 줄 (v39 .line1): 13.5px / 600 · 보조색 · 좌우 31px. 위 여백은 쓰는 곳에서 준다 (처음 연 사람 16px · 위치 거부 · 미지원 14px · 위치를 못 찾음 10px) */
 const GUIDE_LINE = "px-7.75 text-13.5 font-semibold tracking-normal text-sub";
 
 /** 카드 안 한 줄 (v39 .card1) — 결과 없음 · 가까이에 없음: 목록 카드와 같은 면에 안쪽 위아래 17 · 좌우 14px, 14.5px / 700 · 보조색 */
@@ -94,17 +94,20 @@ function scrollToTop(mark: HTMLElement | null) {
  *   "list"      가까운 순서로 줄 = 배지 · 역 이름 · 거리 → onSelectStation(역 id)
  *   "none"      카드 안 한 줄 「2km 안에 판정할 수 있는 역이 없어요」 (거리 글자는 radiusM에서)
  *   "denied"    묶음이 통째로 빠지고, 안내 한 줄이 최근 본 역 아래에      "hidden"  묶음도 안내도 없다
+ *   "failed"    (U7) idle과 같은 줄 + 그 카드 아래 10px에 안내 한 줄 「위치를 찾지 못했어요. 다시 누르거나 역 이름으로 찾아 주세요」.
+ *               줄을 다시 누르면 onFindNearby → 로직이 "locating"으로 바꾸면서 안내가 사라진다
+ *   "unsupported"  (U7) 거부와 같은 모양에 문구만 「이 브라우저에서는 위치를 쓸 수 없어요」
  *
  * 「최근 본 역」 묶음 — 줄 = 배지 · 역 이름 · 오른쪽 끝 「태릉입구 방면」 → onSelectRecent(역 id, 방면)
  *   0줄이면 제목 · 목록 대신 안내 한 줄. null(저장값 복원 전)이면 아무것도 그리지 않고 자리를 비운다 (2026-11-20 영준 확인).
- *   0줄 + 위치 거부(처음 연 사람이 거부)는 모양을 아직 안 정해서 안내 두 줄을 차례로 놓기만 한다 (결정.md 5절 — 2026-11-20 영준 확인).
+ *   0줄 + 위치 거부 · 미지원(처음 연 사람)은 안내 두 줄을 차례로 둔다 — 「역을 한 번 보면…」 다음에 위치 안내 (결정.md 6절, 시안 v40 1-A).
  *
  * 낭독용 이름: 줄은 「공릉 7호선 태릉입구 방면」 · 「건대입구 7호선 320m」 · 「공덕 5호선」처럼 역 이름 · 호선 · 값 순서(aria-label)이고
  * 배지는 숨긴다. 화면 제목 「역 찾기」는 보이지 않는 <h1>으로 둔다 (그림에는 제목 줄이 없다).
  *
  * 크기 클래스의 숫자 × 4 = 시안의 px: 검색창 mx-3 mt-1.75 h-12 pl-4.5 pr-1 gap-2.25 = 좌우 12 · 위 7 · 높이 48 · 안쪽 왼쪽 18 · 오른쪽 4 · 사이 9px,
  * 지우기 size-11 · size-5.5 = 44 · 22px, 스크롤 자리 pb-20 = 80px, 묶음 제목 px-7.75 pt-4.5 pb-2 = 31 · 18 · 8px,
- * 카드 안 한 줄 py-4.25 = 17px, 결과 카드 mt-3 = 12px, 안내 한 줄 pt-4 · pt-3.5 = 16 · 14px, 고른 줄 inset-1 = 4px.
+ * 카드 안 한 줄 py-4.25 = 17px, 결과 카드 mt-3 = 12px, 안내 한 줄 pt-4 · pt-3.5 · pt-2.5 = 16 · 14 · 10px, 고른 줄 inset-1 = 4px.
  */
 export function StationSearchScreen(props: StationSearchScreenProps) {
     const { query, onQueryChange, onClearQuery, onComposingChange, onArrowDown, onArrowUp, onEnter } = props;
@@ -143,21 +146,29 @@ export function StationSearchScreen(props: StationSearchScreenProps) {
         else onArrowUp();
     };
 
-    /** 「가까운 역」 제목 아래의 내용. 묶음이 없는 상태(hidden · denied)는 null */
+    /** 「가까운 역」 제목 아래의 내용. 묶음이 없는 상태(hidden · denied · unsupported)는 null */
     const nearbyBody = (): ReactNode => {
         switch (nearby.status) {
             case "idle":
+            case "failed":
                 return (
-                    <div className={LIST}>
-                        <button
-                            type="button"
-                            aria-label="내 위치로 가까운 역 찾기"
-                            onClick={onFindNearby}
-                            className={`${rowBox(0)} cursor-pointer`}
-                        >
-                            {locateRowBody("내 위치로 찾기", false)}
-                        </button>
-                    </div>
+                    <>
+                        <div className={LIST}>
+                            <button
+                                type="button"
+                                aria-label="내 위치로 가까운 역 찾기"
+                                onClick={onFindNearby}
+                                className={`${rowBox(0)} cursor-pointer`}
+                            >
+                                {locateRowBody("내 위치로 찾기", false)}
+                            </button>
+                        </div>
+                        {nearby.status === "failed" && (
+                            <p role="status" className={`${GUIDE_LINE} pt-2.5`}>
+                                위치를 찾지 못했어요. 다시 누르거나 역 이름으로 찾아 주세요
+                            </p>
+                        )}
+                    </>
                 );
             case "locating":
                 return (
@@ -244,6 +255,9 @@ export function StationSearchScreen(props: StationSearchScreenProps) {
 
             {nearby.status === "denied" && (
                 <p className={`${GUIDE_LINE} pt-3.5`}>브라우저 설정에서 위치를 허용하면 가까운 역을 보여 드려요</p>
+            )}
+            {nearby.status === "unsupported" && (
+                <p className={`${GUIDE_LINE} pt-3.5`}>이 브라우저에서는 위치를 쓸 수 없어요</p>
             )}
         </>
     );
