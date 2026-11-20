@@ -1,4 +1,4 @@
-// 확정 2026-11-15 · 역 찾기 2026-11-20 — 바꾸려면 영준에게 먼저 물어볼 것
+// 확정 2026-11-15 · 역 찾기 2026-11-20 (가까운 역 상태 failed · unsupported 2026-11-20 밤) — 바꾸려면 영준에게 먼저 물어볼 것
 
 /*
  * 뛸까말까 화면 props 타입 — UI(src/ui · Claude Code)와 상태 · 로직(영준) 사이의 경계.
@@ -352,9 +352,14 @@ export type NearbyStations =
     | { status: "locating" }                        // 확인 중 — 같은 줄이 「내 위치 확인 중…」. 꺾쇠가 없고 누를 수 없다 (화면 8)
     | { status: "list"; rows: NearbyStationRow[] }  // 목록 — 가까운 순서 그대로 (정렬 · 개수는 로직). 1줄 이상 (화면 2)
     | { status: "none"; radiusM: number }           // 가까이에 없음 — 카드 안 한 줄 「2km 안에 판정할 수 있는 역이 없어요」 (화면 10)
-    | { status: "denied" };                         // 거부 — 묶음이 통째로 빠지고 안내 한 줄이 최근 본 역 아래에 (화면 9)
+    | { status: "denied" }                         // 거부 — 묶음이 통째로 빠지고 안내 한 줄이 최근 본 역 아래에 (화면 9)
+    | { status: "failed" }                         // 못 찾음(시간 초과 · 위치 사용 불가) — 「내 위치로 찾기」 줄은 idle 그대로 두고 그 카드 아래에 안내 한 줄 (시안 v40 2-A)
+    | { status: "unsupported" };                   // 미지원(브라우저에 위치 기능이 없음) — 거부와 같은 모양에 문구만 「이 브라우저에서는 위치를 쓸 수 없어요」 (시안 v40 3-A)
 // radiusM = 「가까이에 없다」고 본 거리 (m). 비교는 로직이 하고, UI는 문구 앞의 거리 글자로만 쓴다 (2000 → 「2km」)
-// "denied"이면서 최근 본 역이 0줄인 조합(처음 연 사람이 거부)의 모양은 아직 안 정했다 (결정.md 5절, plan.md 7절 「U7 전」)
+// "failed"는 idle에 붙는 표시가 아니라 따로 둔 상태다: 줄을 다시 누르면 onFindNearby → 로직이 "locating"으로 바꾸고, 그러면 안내 한 줄이 사라진다.
+//   (「승강장까지」 SheetLocation의 failed: boolean은 값이 살아 있어서 표시로 붙였지만, 여기는 실패하면 줄 말고 남는 값이 없어 상태로 둔다)
+// "denied" · "unsupported"가 recent 0줄(처음 연 사람)과 겹치면 안내 두 줄을 차례로 둔다 — 「역을 한 번 보면…」 다음에 이 안내 (결정.md 6절, 시안 v40 1-A)
+// 위 둘(failed · unsupported)은 2026-11-20 밤 U7 전에 더했다. 화면은 U7에서 그린다 — 그 전에는 UI가 아무것도 그리지 않는다
 
 /** 역 찾기 화면 — 위에서부터 검색창 → 「가까운 역」 묶음 → 「최근 본 역」 묶음 → 하단 캡슐. 글자를 치면 묶음 대신 결과 카드 (화면 1 ~ 10, 결정.md 6절) */
 export type StationSearchScreenProps = {
@@ -369,7 +374,7 @@ export type StationSearchScreenProps = {
     results: StationSearchResults;                    // 검색창 아래에 그릴 것. "idle"일 때만 아래 nearby · recent 묶음이 보인다
     onSelectStation: (stationId: string) => void;     // 결과 줄 · 가까운 역 줄을 눌렀을 때. 어느 방면으로 열지는 로직 (전에 본 방면)
     nearby: NearbyStations;                           // 「가까운 역」 묶음
-    onFindNearby: () => void;                         // 「내 위치로 찾기」 줄을 눌렀을 때 (nearby가 "idle"일 때만 불린다)
+    onFindNearby: () => void;                         // 「내 위치로 찾기」 줄을 눌렀을 때 (nearby가 "idle" · "failed"일 때만 불린다)
     recent: RecentStationRow[] | null;                // 「최근 본 역」 묶음, 위에서부터 그릴 순서 그대로. 0줄이면 제목 · 목록 대신 안내 한 줄 (화면 3)
                                                       // 아직 모르면(저장값 복원 전) null → 제목 · 줄 · 안내 없이 자리를 비운다 (plan.md 7절 「U6 ① 전」 제안대로)
     onSelectRecent: (stationId: string, direction: Direction) => void;  // 최근 본 역 줄을 눌렀을 때 → 그 방면 판정으로 바로
