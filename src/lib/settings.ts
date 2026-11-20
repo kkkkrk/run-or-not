@@ -14,7 +14,7 @@ export const SETTING_DEFS: Record<SettingKey, DEF> = {
     },
     run: {
         field: "runSpeed",
-        steps: [7.5,9.5,10.5],
+        steps: [7.5,9.0,10.5],
     },
     station: {
         field: "stationOverheadSec",
@@ -29,10 +29,10 @@ const KEYS:(keyof VerdictSettings)[] = ["walkSpeed","runSpeed","stationOverheadS
 export const canResetSettings = (values: Record<keyof VerdictSettings,number>) => KEYS.some((key) => values[key] !== DEFAULT_SETTINGS[key]);
 
 const RANGE: Record<SettingKey, [number,number]> = {
-    walk: [3.6,5.4],
-    run: [7.5, 10.5],
-    station: [40, 90],
-    margin: [10, 60],
+    walk: [3.0,6.5],
+    run: [7.0, 14.0],
+    station: [10, 180],
+    margin: [10, 90],
 }
 const round1 = (value: number) => Math.round(value * 10) / 10;
 
