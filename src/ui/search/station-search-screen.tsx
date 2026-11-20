@@ -74,7 +74,8 @@ function scrollToTop(mark: HTMLElement | null) {
  * 검색창 아래 (이 자리만 스크롤되고, 목록은 하단 캡슐 밑으로 지나간다) — 무엇을 그릴지는 results.status가 정한다
  *   "idle"  「가까운 역」 묶음 + 「최근 본 역」 묶음 (처음 화면)
  *   "list"  결과 카드. 줄 = 배지 · 역 이름(일치한 글자는 빨강) · 오른쪽 끝 「7호선」
- *   "none"  카드 안 한 줄 「「홍데」와 맞는 역이 없어요」. 조사는 검색어 끝 글자의 받침 소리로 고른다 (「강남」과 · 「종로6」과)
+ *   "none"  카드 안 한 줄 「「홍데」와 맞는 역이 없어요」. 조사는 검색어 끝 글자의 받침 소리로 고른다 (「강남」과 · 「종로6」과).
+ *           검색어가 길어도 한 줄이다: 검색어 쪽만 …으로 줄고 「」와 맞는 역이 없어요」는 다 보인다 (U6 검토 2번 — 화면 낭독기는 전체를 읽는다)
  *   UI는 query가 비었는지를 보고 고르지 않는다 (ui.ts StationSearchResults).
  *
  * 콤보박스 (결정.md 6절 「만들 때 챙길 것」) — 입력칸 role="combobox", 결과 카드 listbox, 결과 줄 option
@@ -82,10 +83,11 @@ function scrollToTop(mark: HTMLElement | null) {
  *   고른 줄(results.activeIndex)에만 4px 안쪽 둥근 면이 보이고, 입력칸의 aria-activedescendant가 그 줄을 가리킨다.
  *   null이면(화살표를 아직 안 썼으면) 아무 줄에도 표시가 없다. 범위를 벗어난 번호도 없는 것으로 그린다.
  *   Enter · 휴대폰 키보드의 「검색」 → onEnter. 어느 줄로 갈지는 로직이 정한다. 결과 줄을 누르면 onSelectStation(역 id).
- *   한글 조합 중에 눌린 ↑ · ↓ · Enter는 넘기지 않는다: 그 키는 글자를 끝내는 데 쓰이고, 브라우저에 따라(맥 크롬) 조합이 끝난 뒤
- *   같은 키가 한 번 더 온다 — 둘 다 넘기면 ↓가 두 칸 움직이고 Enter가 두 번 불린다.
- *   Enter는 keydown과 폼 제출 두 길로 받는다: 휴대폰 키보드의 「검색」이 Enter keydown으로 오지 않는 경우를 폼 제출이 받는다.
- *   keydown에서 받았으면 기본 동작을 막아서 한 번만 불린다.
+ *   한글 조합을 끝내는 데 쓰인 ↑ · ↓ · Enter는 넘기지 않는다 (isComposing이 true이거나 keyCode가 229 — 입력기가 가져간 키).
+ *   그 키는 글자를 확정할 뿐이고, 브라우저에 따라(맥 크롬) 조합이 끝난 뒤 같은 키가 한 번 더 온다 — 둘 다 넘기면 ↓가 두 칸
+ *   움직이고 Enter가 두 번 불린다. 사파리는 조합을 먼저 끝내고 그 키를 isComposing false · keyCode 229로 보내서 229도 같이 본다 (U6 검토 1번).
+ *   Enter는 keydown과 폼 제출 두 길로 받는다: 휴대폰 키보드의 「검색」이 Enter keydown으로 오지 않는 경우와, 조합을 끝낸 Enter를
+ *   브라우저가 그대로 제출로 잇는 경우를 폼 제출이 받는다. keydown에서 받았으면 기본 동작을 막아서 한 번만 불린다.
  *
  * 「가까운 역」 묶음 — 제목 아래 같은 자리에서 내용만 바뀐다 (nearby.status)
  *   "idle"      「내 위치로 찾기」 줄 + › → onFindNearby          "locating"  같은 줄이 「내 위치 확인 중…」 (누를 수 없음 · role="status")
@@ -122,7 +124,9 @@ export function StationSearchScreen(props: StationSearchScreenProps) {
     const activeIndex = picked !== null && rows !== null && Number.isInteger(picked) && picked >= 0 && picked < rows.length ? picked : null;
 
     const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-        if (event.nativeEvent.isComposing) return;
+        // 한글 조합을 끝내는 데 쓰인 키는 넘기지 않는다. 조합 중이면 isComposing이 true이고, 사파리는 조합을 먼저 끝낸 뒤에
+        // 그 키를 isComposing false · keyCode 229로 보낸다 (229 = 입력기가 가져간 키). 둘 다 걸러야 글자만 확정되고 줄은 안 골라진다
+        if (event.nativeEvent.isComposing || event.keyCode === 229) return;
 
         if (event.key === "Enter") {
             event.preventDefault(); // 폼 제출로 한 번 더 불리지 않게
@@ -305,7 +309,7 @@ export function StationSearchScreen(props: StationSearchScreenProps) {
             <div
                 data-search-scroll=""
                 tabIndex={-1}
-                className="scrollbar-none flex min-h-0 flex-1 flex-col overflow-y-auto pb-20 outline-none *:shrink-0 [&::-webkit-scrollbar]:hidden"
+                className="scrollbar-none flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto pb-20 outline-none *:shrink-0 [&::-webkit-scrollbar]:hidden"
             >
                 <span key={query} ref={scrollToTop} hidden />
 
@@ -329,8 +333,11 @@ export function StationSearchScreen(props: StationSearchScreenProps) {
                     </div>
                 )}
                 {results.status === "none" && (
-                    <p role="status" className={`${CARD_LINE} mt-3`}>
-                        {`「${word}」${endsWithBatchim(word) ? "과" : "와"} 맞는 역이 없어요`}
+                    // 세 조각을 한 줄에: 여는 낫표 · 검색어(길면 이쪽만 …) · 닫는 낫표부터 끝까지(줄어들지 않는다)
+                    <p role="status" className={`${CARD_LINE} mt-3 flex`}>
+                        <span className="flex-none">「</span>
+                        <span className="min-w-0 truncate">{word}</span>
+                        <span className="flex-none whitespace-nowrap">{`」${endsWithBatchim(word) ? "과" : "와"} 맞는 역이 없어요`}</span>
                     </p>
                 )}
                 {results.status === "idle" && home}

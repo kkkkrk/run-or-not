@@ -293,6 +293,15 @@ export const EXTRA_CASES: SearchCase[] = [
         recent: RECENT,
     },
     {
+        id: "search-none-long",
+        name: "결과 없음 — 긴 검색어",
+        note: "띄어쓰기 없는 28자를 붙여 넣었을 때 → 검색어 쪽만 …으로 줄고 한 줄 그대로 (U6 검토 2번)",
+        query: "동대문역사문화공원역4번출구앞에서만나기로했는데요",
+        results: { status: "none" },
+        nearby: { status: "idle" },
+        recent: RECENT,
+    },
+    {
         id: "search-far-other",
         name: "가까이에 없음 — 다른 거리",
         note: "radiusM 1500 → 「1.5km 안에 …」 (기준 거리는 로직이 정함)",
