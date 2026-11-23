@@ -128,8 +128,12 @@ export function StationSearchScreen(props: StationSearchScreenProps) {
 
     const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
         // 한글 조합을 끝내는 데 쓰인 키는 넘기지 않는다. 조합 중이면 isComposing이 true이고, 사파리는 조합을 먼저 끝낸 뒤에
-        // 그 키를 isComposing false · keyCode 229로 보낸다 (229 = 입력기가 가져간 키). 둘 다 걸러야 글자만 확정되고 줄은 안 골라진다
-        if (event.nativeEvent.isComposing || event.keyCode === 229) return;
+        // 그 키를 isComposing false · keyCode 229로 보낸다 (229 = 입력기가 가져간 키). 둘 다 걸러야 글자만 확정되고 줄은 안 골라진다.
+        // Enter는 기본 동작(폼 제출)도 막는다 — 안 막으면 onSubmit을 거쳐 onEnter가 불린다. 다른 키는 입력기 몫이라 그대로 둔다
+        if (event.nativeEvent.isComposing || event.keyCode === 229) {
+            if (event.key === "Enter") event.preventDefault();
+            return;
+        }
 
         if (event.key === "Enter") {
             event.preventDefault(); // 폼 제출로 한 번 더 불리지 않게
