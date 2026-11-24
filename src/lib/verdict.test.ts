@@ -132,3 +132,25 @@ describe("5~7. 열차 여러 대", () => {
         expect(v.later.map((t) => t.arrival.trainNo)).toEqual(["C"]);
     });
 });
+// ── 8. 횡단보도 대기 (L6, 2026-11-24) ───────────────────────
+// 내 위치로 계산할 때만 들어온다 ({ meters, waitSec }). 걸어도 뛰어도 똑같이 드는 시간이라 양쪽에 그대로 더한다
+// 기준: 거리 375m → 걸으면 360 · 뛰면 210 (1번 묶음)
+
+describe("8. 횡단보도 대기 (waitSec)", () => {
+    it("거리 375m + 대기 60초 → 걸으면 420, 뛰면 270 (둘 다 60초씩 늘어난다)", () => {
+        expect(needSeconds({ meters: 375, waitSec: 60 }, settings)).toEqual({ walk: 420, run: 270 });
+    });
+    it("대기가 없으면(0 · 안 넣음) 전과 같다", () => {
+        expect(needSeconds({ meters: 375, waitSec: 0 }, settings)).toEqual({ walk: 360, run: 210 });
+        expect(needSeconds({ meters: 375 }, settings)).toEqual({ walk: 360, run: 210 });
+    });
+    it("뛰어서 줄어드는 건 거리 부분뿐이다 — 걷기와 뛰기의 차이는 대기가 있어도 150초 그대로", () => {
+        const waited = needSeconds({ meters: 375, waitSec: 90 }, settings);
+        expect(waited.walk - waited.run).toBe(150);
+    });
+    it("판정에도 들어간다: 300초 뒤 열차 — 대기 0이면 뛰어요, 90초면 아슬아슬, 120초면 못 타서 일단 걸어가요", () => {
+        expect(judge([train(300)], now, { meters: 375 }, settings).kind).toBe("run");                       // 뛰면 210
+        expect(judge([train(300)], now, { meters: 375, waitSec: 90 }, settings).kind).toBe("tight");        // 뛰면 300
+        expect(judge([train(300)], now, { meters: 375, waitSec: 120 }, settings).kind).toBe("keep-walking"); // 뛰면 330
+    });
+});

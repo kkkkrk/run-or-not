@@ -3,13 +3,13 @@
 // 키는 서버에만 있다 (lib/api/tmap.ts는 server-only). 브라우저는 이 route만 부른다
 //
 // 응답 약속 (use-walking-time이 이걸 믿고 화면을 나눈다)
-//   200 { distanceM }  T맵 총거리 (m)
+//   200 { distanceM, crosswalkLeftM }  T맵 총거리 (m) + 횡단보도마다 「건넌 뒤 남는 거리」
 //   400 { error }      본문이 JSON이 아니거나 모양이 틀림
 //   404 { error }      모르는 역 id
 //   502 { error }      T맵 실패 → 화면은 직선거리 × 1.3 + 「약」
 import { fetchPedestrianRoute } from "@/lib/api/tmap";
 import { getStation } from "@/lib/stations";
-import { readTotalDistance, readWalkingRequest } from "@/lib/walking";
+import { readCrosswalkLeftM, readTotalDistance, readWalkingRequest } from "@/lib/walking";
 import type { WalkingErrorBody, WalkingResponse } from "@/types/walking";
 
 function errorJson(status: 400 | 404 | 502, error: string): Response {
@@ -42,5 +42,5 @@ export async function POST(request: Request): Promise<Response> {
         console.error("T맵 응답에 totalDistance가 없음");
         return errorJson(502, "걷는 거리를 가져오지 못했어요");
     }
-    return Response.json({ distanceM } satisfies WalkingResponse);
+    return Response.json({ distanceM, crosswalkLeftM: readCrosswalkLeftM(raw) } satisfies WalkingResponse);
 }

@@ -4,10 +4,6 @@
 // → 'server-only'를 붙이지 않는다. React·스토어·브라우저 API를 import하지 않는다. 「지금 시각」은 인자로 받는다
 import type { Arrival, ArrivalObservation, Direction } from "@/types/subway";
 
-// ── 원본 모양 ─────────────────────────────────────────────────
-// 서울시 원본 응답의 열차 하나. 실제 응답에서 "쓰는 필드만" 정의한다.
-// 이 타입은 export하지 않는다. 서울시가 필드를 바꿔도 고칠 곳이 이 파일 하나다.
-// 예시 값은 src/lib/__fixtures__/ (2026-11-01 15:24 실측)
 type RawArrival = {
     subwayId: string;    // 몇 호선인지 호선 코드 예: "1002"
     updnLine: string;    // 열차 진행 방향 예: 2호선 "내선"/"외선", 나머지 "상행"/"하행"

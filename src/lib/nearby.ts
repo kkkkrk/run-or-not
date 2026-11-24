@@ -1,13 +1,12 @@
 // src/lib/nearby.ts
-import type { NearbyStationRow, NearbyStations } from "@/types/ui";
+import type { NearbyStations } from "@/types/ui";
 import type { GeoState } from "@/lib/geo-state";
-import { findNearbyStation } from "@/lib/stations";
+import { findNearbyStation, NEARBY_RADIUS_M } from "@/lib/stations";
 import { getLineColor } from "@/lib/line-color";
-
-export const NEARBY_RADIUS_M = 2000;
 
 export function toNearby(geo: GeoState): NearbyStations {
     switch (geo.status) {
+        case "unknown": // 권한 답을 기다리는 수십 ms — 줄이 생겼다 사라지지 않게 「내 위치로 찾기」 줄을 그대로 둔다
         case "idle":
             return  {status: "idle"};
         case "locating":

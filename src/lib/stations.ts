@@ -3,7 +3,10 @@
 // → 'server-only'를 붙이지 않는다. React·스토어·브라우저 API를 import하지 않는다
 import stationsJson from "@/data/stations.json";
 import type { Direction, StationWithNext } from "@/types/subway";
-import { NEARBY_RADIUS_M } from "./nearby";
+import { getDistance } from "./distance";
+
+/** 「가까운 역」으로 보는 거리 (m). 이 거리까지는 넣는다 (plan.md 7절, 11/21) */
+export const NEARBY_RADIUS_M = 2000;
 
 // stations.json의 역마다 방향별 다음 역(next)이 들어 있다 (scripts/build-stations.ts) → 역명판 양옆 칸
 export const allStations: StationWithNext[] = stationsJson;
@@ -73,26 +76,6 @@ export const rightDirSelect = (subwayId:string):Direction => {
 
 export function stationHref(stationId: string, dir: Direction): string {
     return `/station/${stationId}?dir=${dir}`;
-}
-
-function getDistance(
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number
-): number {
-    const toRad = Math.PI / 180;
-
-    const dLat = (lat2 - lat1) * toRad;
-    const dLon = (lon2 - lon1) * toRad;
-
-    const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * toRad) *
-        Math.cos(lat2 * toRad) *
-        Math.sin(dLon / 2) ** 2;
-
-    return 6371000 * 2 * Math.asin(Math.sqrt(a));
 }
 
 export function findNearbyStation(lat: number, lng: number):{station:StationWithNext, distanceM:number}[] {

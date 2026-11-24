@@ -1,7 +1,7 @@
 'use client'
 import { StationSearchScreen } from "@/ui/search/station-search-screen";
 import { useState } from "react";
-import { StationSearchResults, RecentStationRow, BottomNavProps, Direction, NearbyStations } from "@/types/ui";
+import { StationSearchResults, RecentStationRow, BottomNavProps, Direction } from "@/types/ui";
 import { useRouter } from "next/navigation";
 import { getStation, rightDirSelect, searchStations, stationHref } from "@/lib/stations";
 import { useHydrated } from "@/hooks/use-hydrated";

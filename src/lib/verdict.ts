@@ -8,7 +8,8 @@ export type VerdictSettings = {
     //TODO: 역마다 다른 가중치로 바꿔야함
     marginSec: number;          // 걸어도 돼 여유 기준
 };
-export type WalkInput = { meters: number } | { walkSec: number }; // 위치 허용 / 거부(수동 입력)
+// 위치 허용 / 거부(수동 입력). waitSec = 가는 길에 속도와 상관없이 드는 시간(횡단보도 대기). 없으면 0 (L6, 2026-11-24)
+export type WalkInput = { meters: number; waitSec?: number } | { walkSec: number };
 export type TrainVerdict = {
     arrival: Arrival;
     kind: "slow" | "walk" | "run" | "miss" | "tight";
@@ -29,8 +30,9 @@ function ceilSec(input: number): number{
 }
 export function needSeconds(input:WalkInput, s:VerdictSettings): {walk: number; run: number}{
     if("meters" in input){
-        const walkSec = ceilSec(input.meters / (s.walkSpeed / 3.6) + s.stationOverheadSec);
-        const runSec = ceilSec(input.meters / (s.runSpeed / 3.6) + s.stationOverheadSec);
+        const fixedSec = s.stationOverheadSec + (input.waitSec ?? 0); // 뛰어도 줄지 않는 시간: 역 안 이동 + 횡단보도 대기
+        const walkSec = ceilSec(input.meters / (s.walkSpeed / 3.6) + fixedSec);
+        const runSec = ceilSec(input.meters / (s.runSpeed / 3.6) + fixedSec);
         return {walk: walkSec, run: runSec};
     }
     if(input.walkSec <= s.stationOverheadSec) return {walk: ceilSec(input.walkSec), run: ceilSec(input.walkSec)};

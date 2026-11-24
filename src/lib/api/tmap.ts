@@ -4,6 +4,9 @@ import "server-only";
 import type { LatLng } from "@/types/walking";
 
 const ENDPOINT = "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1";
+// T맵이 답을 안 주고 붙잡고 있으면 화면이 「걷는 길 계산 중」에 갇힌다 → 이 시간이 지나면 실패로 끝낸다 (그러면 화면이 어림값을 쓴다)
+// 실제 응답은 0.2 ~ 0.4초였다 (2026-11-23, 3번)
+const TMAP_TIMEOUT_MS = 5_000;
 
 export async function fetchPedestrianRoute(from: LatLng, to: LatLng, toName: string): Promise<unknown> {
     const key = process.env.TMAP_APP_KEY;
@@ -28,6 +31,7 @@ export async function fetchPedestrianRoute(from: LatLng, to: LatLng, toName: str
             resCoordType: "WGS84GEO",
         }),
         cache: "no-store",                      // 사람 · 순간마다 출발점이 달라 저장할 답이 없음
+        signal: AbortSignal.timeout(TMAP_TIMEOUT_MS), // 5초 안에 답이 없으면 fetch가 에러를 던진다 → route가 502
     });
     if(!res.ok){
         throw new Error(`HTTP 에러: ${res.status}`);
