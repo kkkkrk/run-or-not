@@ -1,22 +1,11 @@
 import type { StationNameplateProps } from "@/types/ui";
+import { lineBadgeText, UI_LINE } from "@/ui/shared/format";
 import { chevronLeft, chevronRight } from "@/ui/shared/icons";
 
 type Side = StationNameplateProps["selected"]; // "left" | "right"
 
 /** 가운데 역명이 이 글자 수 이상이면 판 전체의 글자를 한 단계 줄인다 (결정.md 1절) */
 const LONG_NAME_LENGTH = 7;
-
-/** 배지에 숫자 대신 「우이」를 쓰는 하나뿐인 노선. 노선색(#B0CE18)이 밝아서 글자색도 이 노선만 짙다 (결정.md 1절) */
-const UI_LINE = "우이신설선";
-
-/**
- * 호선 배지에 쓸 글자 (결정.md 1절): 「7호선」 → 「7」, 우이신설선만 「우이」.
- * 그 밖의 이름(아직 없는 노선)은 정해진 모양이 없어서 글자 없이 노선색 원만 그린다
- */
-function badgeText(lineName: string): string {
-    if (lineName === UI_LINE) return "우이";
-    return /^(\d+)호선$/.exec(lineName)?.[1] ?? "";
-}
 
 /**
  * 역명판 ‹ 이전역 · 현재역 · 다음역 › — 모든 역 화면 맨 위의 판 하나, 3칸 (결정.md 1절, v32 CSS 4절 .sn2).
@@ -80,14 +69,17 @@ export function StationNameplate({
                 }`}
             >
                 {/* 호선 배지: 노선색 원. 색 화면에서는 노선색이 바탕에 묻히지 않게 흰 테두리를 두른다.
-                    우이신설선은 노선색이 밝아서 글자만 짙은 색이다 (흰 글자 대비 1.8:1, 결정.md 1절) */}
+                    우이신설선은 노선색이 밝아서 글자만 짙은 색이다 (흰 글자 대비 1.8:1, 결정.md 1절).
+                    숫자의 자간은 0이다 (v39 CSS 4절 .badge의 letter-spacing: normal). U2 때는 v32대로 본문 자간(−0.015em)을 물려받았는데,
+                    v39에서 배지가 역 찾기 목록과 한 규칙이 되면서 바뀌었다 — 숫자가 0.1px쯤 옮겨 간다 (2026-11-20 영준 확인) */}
                 <span
                     style={{ backgroundColor: lineColor }}
                     className={`grid size-6 flex-none place-items-center rounded-full font-extrabold shadow-[0_0_0_1.5px_rgb(255_255_255/0.85)] in-data-[tone=white]:shadow-none ${
-                        isUi ? "text-10 tracking-[-0.06em] text-ink" : "text-12.5 text-white"
+                        isUi ? "text-10 tracking-[-0.06em] text-ink" : "text-12.5 tracking-normal text-white"
                     }`}
                 >
-                    <span aria-hidden="true">{badgeText(lineName)}</span>
+                    {/* 배지 글자(7 · 우이)는 역 찾기 목록 줄의 배지와 같은 규칙이다 — shared/format.ts lineBadgeText */}
+                    <span aria-hidden="true">{lineBadgeText(lineName)}</span>
                     <span className="sr-only">{lineName}</span>
                 </span>
                 <span className="min-w-0 truncate">{stationName}</span>

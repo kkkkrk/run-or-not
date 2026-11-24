@@ -2,19 +2,15 @@
 // 역 조회·검색. 서버(page·route)와 브라우저(검색·즐겨찾기) 양쪽에서 import한다
 // → 'server-only'를 붙이지 않는다. React·스토어·브라우저 API를 import하지 않는다
 import stationsJson from "@/data/stations.json";
-import type { StationWithNext } from "@/types/subway";
+import type { Direction, StationWithNext } from "@/types/subway";
+import { getDistance } from "./distance";
+
+/** 「가까운 역」으로 보는 거리 (m). 이 거리까지는 넣는다 (plan.md 7절, 11/21) */
+export const NEARBY_RADIUS_M = 2000;
 
 // stations.json의 역마다 방향별 다음 역(next)이 들어 있다 (scripts/build-stations.ts) → 역명판 양옆 칸
 export const allStations: StationWithNext[] = stationsJson;
 /** 비교용 문자열로 바꾼다. 역 이름과 검색어에 같은 규칙을 쓴다 */
-function normalize(text: string): string {
-    return text.replace(/[^가-힣0-9a-zA-Z]/g, '').toLowerCase();
-}
-
-/** 역마다 정규화한 키를 로드 때 한 번 계산해 둔다. 검색할 때마다 다시 만들지 않기 위함 */
-const searchIndex: { station: StationWithNext; key: string }[] = allStations.map((station)=>{
-    return {station: station, key: normalize(station.name)}
-});
 
 /** id로 역 하나를 찾는다. 없으면 undefined (404 판단은 부른 쪽이 한다) */
 export function getStation(id: string): StationWithNext | undefined {
@@ -22,24 +18,70 @@ export function getStation(id: string): StationWithNext | undefined {
 }
 
 /** 검색어로 역을 찾는다. 앞부분 일치 먼저, 그다음 포함. 최대 limit개 */
-export function searchStations(query: string, limit = 20) {
-    const processedQuery = normalize(query).replace(/역$/, '');
-    if(!processedQuery) return [];
-    const rst = searchIndex.filter((station)=>
-        station.key.includes(processedQuery)
-    )
-    .sort((a,b)=> {
-        const aIsPrefix = a.key.startsWith(processedQuery);
-        const bIsPrefix = b.key.startsWith(processedQuery);
-        if (aIsPrefix === bIsPrefix) return 0;
-        return aIsPrefix ? -1 : 1;
-    })
-    .map((station) => station.station)
-    
-
-    return rst.slice(0,limit);
+/** 비교용 문자열과 「key 자리 → 원래 이름 자리」 표를 같이 만든다.
+ *  역 이름과 검색어에 같은 규칙을 쓴다 (검색어는 key만 쓴다) */
+function normalize(text: string): { key: string; origIndex: number[] } {
+    let key = "";
+    const origIndex: number[] = [];
+    for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (!/[가-힣0-9a-zA-Z]/.test(ch)) continue; // 지우는 글자는 표에도 안 적는다
+        key += ch.toLowerCase();                     // 한 글자 → 한 글자 (길이가 바뀌는 변환을 넣으면 이 표가 깨진다)
+        origIndex.push(i);                           // key의 이 글자는 원래 i번째였다
+    }
+    return { key, origIndex };
 }
 
-export function stationHref(stationId: string, dir: "up" | "down"): string {
+/** 로드 때 한 번: 역마다 key와 번호표 */
+const searchIndex = allStations.map((station) => ({
+    station,
+    ...normalize(station.name),
+}));
+
+export type StationMatch = {
+    station: StationWithNext;
+    matchStart: number;   // station.name 기준
+    matchLength: number;
+};
+
+/** 검색어로 역을 찾는다. 앞부분 일치 먼저, 그다음 포함. 최대 limit개 */
+export function searchStations(query: string, limit = 20): StationMatch[] {
+    const q = normalize(query).key.replace(/역$/, "");
+    if (!q) return [];
+
+    return searchIndex
+        .map((entry) => ({ entry, keyIdx: entry.key.indexOf(q) }))  // indexOf 한 번으로 「맞나」와 「어디서」를 같이
+        .filter(({ keyIdx }) => keyIdx !== -1)
+        .sort((a, b) => Number(b.keyIdx === 0) - Number(a.keyIdx === 0)) // 앞부분 일치 먼저 (같으면 원래 순서 유지)
+        .slice(0, limit)
+        .map(({ entry, keyIdx }) => {
+            const start = entry.origIndex[keyIdx];
+            const end = entry.origIndex[keyIdx + q.length - 1];     // 마지막으로 맞은 글자의 원래 자리
+            return {
+                station: entry.station,
+                matchStart: start,
+                matchLength: end - start + 1,                       // 가운데 지워진 점까지 포함 → 「419」는 「4.19」 4글자
+            };
+        });
+}
+
+
+const UP_ON_RIGHT_LINES = ["1002", "1009", "1092"];
+export const rightDirSelect = (subwayId:string):Direction => {
+    if(UP_ON_RIGHT_LINES.includes(subwayId)){
+        return "up";
+    }
+    return "down"
+}
+
+export function stationHref(stationId: string, dir: Direction): string {
     return `/station/${stationId}?dir=${dir}`;
+}
+
+export function findNearbyStation(lat: number, lng: number):{station:StationWithNext, distanceM:number}[] {
+    return allStations.flatMap((station)=>{
+        const distanceM = getDistance(station.lat, station.lng, lat, lng);
+        if(distanceM > NEARBY_RADIUS_M) return [];
+        return {station, distanceM};
+    }).sort((a,b) => a.distanceM - b.distanceM).slice(0,3);
 }

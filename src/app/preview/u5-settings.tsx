@@ -4,10 +4,10 @@ import { useState, type ReactNode } from "react";
 import type { ScreenTone, SettingKey, SettingSheetProps, SettingsScreenProps } from "@/types/ui";
 import { SettingsScreen } from "@/ui/settings/settings-screen";
 import { BottomNav } from "@/ui/shared/bottom-nav";
-import { ScreenFrame } from "@/ui/shared/screen-frame";
 import { BoardTitle, BOTTOM_NAV, CONTROL, FullLink, Group, log, PART_BASE, Phone, UnknownScreen, WRAP } from "./kit";
 import { U2FullScreen } from "./u2-verdict";
 import { U3FullScreen } from "./u3-screens";
+import { U6FullScreen } from "./u6-search";
 import {
     DEFAULTS,
     fakeCanDecrease,
@@ -19,7 +19,6 @@ import {
     NAV_COLOR_CASES,
     NAV_OFF_CASES,
     NAV_WHITE_CASES,
-    SEARCH_PLACE_ID,
     SETTING_SHEET_CASES,
     SETTINGS_CASES,
     U5_CASES,
@@ -184,23 +183,7 @@ const navStrips = (cases: NavCase[]) => (
 
 /* ───────────────────────── 캡슐을 붙인 화면 ───────────────────────── */
 
-/**
- * 역 찾기 자리 — 역 찾기 화면은 U6에서 만든다. 지금은 흰 화면 틀에 캡슐(역 찾기가 현재 탭)만 붙은 모습이다.
- * 가운데 점선 칸은 화면 컴포넌트가 아니라 미리보기가 얹은 표시다
- */
-function SearchPlace() {
-    return (
-        <ScreenFrame tone="white" nameplate={null} bottomNav={{ ...BOTTOM_NAV, active: "search" }}>
-            <p className="m-auto rounded-[20px] border border-dashed border-ink/25 px-6 py-7 text-center text-13 font-semibold text-sub">
-                역 찾기 화면 자리
-                <br />
-                검색창 · 결과 목록은 U6에서 만들어요
-            </p>
-        </ScreenFrame>
-    );
-}
-
-/** 다른 묶음(U2 · U3)의 화면 한 장을 그대로 가져와 캡슐이 붙은 모습을 본다 */
+/** 다른 묶음(U2 · U3 · U6)의 화면 한 장을 그대로 가져와 캡슐이 붙은 모습을 본다 */
 const ATTACHED: { id: string; name: string; note: string; screen: ReactNode }[] = [
     {
         id: "run-fresh",
@@ -227,10 +210,10 @@ const ATTACHED: { id: string; name: string; note: string; screen: ReactNode }[] 
         screen: <U3FullScreen id="ask" />,
     },
     {
-        id: SEARCH_PLACE_ID,
-        name: "역 찾기 자리",
-        note: "화면은 U6 · 지금은 흰 화면 틀 + 캡슐(역 찾기가 현재 탭)만",
-        screen: <SearchPlace />,
+        id: "search-home",
+        name: "역 찾기 화면",
+        note: "흰 화면의 캡슐 · 역 찾기가 현재 탭 (U6에서 자리 표시가 진짜 화면으로 바뀜)",
+        screen: <U6FullScreen id="search-home" />,
     },
 ];
 
@@ -244,7 +227,7 @@ export function U5SettingsPreview() {
             </h2>
             <p className="mt-1.5 max-w-245 text-13 font-semibold text-sub">
                 시안 design/v32.html의 「설정」 묶음과 나란히 놓고 봐요. 버튼을 누르면 브라우저 콘솔에 「[미리보기 …]」 로그가
-                찍혀요. 캡슐의 탭을 누르면 그 탭의 화면 한 장만 크게 보기로 가요 (거기서는 캡슐로 역 찾기 자리 · 판정 ·
+                찍혀요. 캡슐의 탭을 누르면 그 탭의 화면 한 장만 크게 보기로 가요 (거기서는 캡슐로 역 찾기 · 판정 ·
                 설정을 오갈 수 있어요). 시트가 올라오는 움직임과 뒤가 어두워지는 움직임은 「동작 줄이기」가 켜져 있으면
                 멈춰 있어요 (DevTools → Rendering → prefers-reduced-motion: no-preference로 봐요).
             </p>
@@ -303,8 +286,6 @@ export function U5SettingsPreview() {
 
 /** 한 장만 브라우저 가득 — 페이지가 화면 컴포넌트를 쓰는 모습 그대로 (/preview?screen=이름) */
 export function U5FullScreen({ id }: { id: string }) {
-    if (id === SEARCH_PLACE_ID) return <SearchPlace />;
-
     const found = U5_CASES.find((c) => c.id === id);
     if (!found) return <UnknownScreen id={id} />;
     // key: 캡슐로 다른 설정 예시로 옮겨 가면(주소의 screen이 바뀌면) 새로 만들어서 그 예시의 처음 값 · 처음 시트 상태로 시작한다.

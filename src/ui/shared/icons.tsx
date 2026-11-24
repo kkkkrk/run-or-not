@@ -1,7 +1,7 @@
 /*
  * 시안 아이콘 — design/v32.html 스크립트 1절의 I에서 그림(path)과 크기 · 굵기를 그대로 옮긴 것.
  * 화면을 만든 U에서 쓰는 것만 있다 (U2: 꺾쇠 · 새로고침 · 위치 화살표, U3: − + · 다시 시도 · 열차 그림,
- * U5: 하단 캡슐의 탭 셋 · 줄 끝의 ›). 나머지(검색 …)는 그 화면을 만드는 U에서 더한다.
+ * U5: 하단 캡슐의 탭 셋 · 줄 끝의 ›, U6: 역 찾기의 돋보기 · × · 「내 위치로 찾기」 줄의 › — design/v39.html 스크립트 6-1절의 FI).
  *
  * props가 없어서 컴포넌트가 아니라 「그림 조각」이다. {chevronLeft}처럼 중괄호로 그대로 넣는다.
  * 색은 글자색(currentColor)을 따르고, 옆 글자가 뜻을 말하므로 화면 낭독기에는 읽히지 않게 한다 (aria-hidden).
@@ -65,7 +65,8 @@ export const refreshArrow = (
 
 /**
  * 위치 화살표 — 내 위치로 계산 중이라는 표시. 쓰는 곳마다 크기가 달라서 크기를 받는다.
- * 「승강장까지」 앞은 11px (결정.md 1절). 시트 버튼 13 · 확인 중 한 줄 14 · 승강장까지 몇 분? 버튼 16은 U3 · U7에서 쓴다
+ * 「승강장까지」 앞은 11px (결정.md 1절). 시트 버튼 13 · 확인 중 한 줄 14 · 승강장까지 몇 분? 버튼 16은 U3 · U7에서 쓴다.
+ * 역 찾기의 「내 위치로 찾기」 줄은 16px (결정.md 6절 — 같은 그림, U6)
  */
 export const locationArrow = (size: number) => (
     <svg
@@ -224,5 +225,59 @@ export const rowChevron = (
         aria-hidden="true"
     >
         <path d="M9 6l6 6-6 6" />
+    </svg>
+);
+
+/** 검색창 왼쪽의 돋보기 (20px, v39 FI.search) */
+export const search = (
+    <svg
+        className="block flex-none"
+        width={20}
+        height={20}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2.6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+    >
+        <circle cx={11} cy={11} r={7} />
+        <path d="M20 20l-3.5-3.5" />
+    </svg>
+);
+
+/** 검색창 지우기 버튼의 × (12px, v39 FI.x) — 22px 회색 원 안에 흰색으로 놓인다 */
+export const clearX = (
+    <svg
+        className="block flex-none"
+        width={12}
+        height={12}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2.8}
+        strokeLinecap="round"
+        aria-hidden="true"
+    >
+        <path d="M6 6l12 12M18 6L6 18" />
+    </svg>
+);
+
+/** 역 찾기 「내 위치로 찾기」 줄 끝의 › (15px, v39 FI.chev). 역명판 · 「승강장까지」 줄의 ›와 같은 그림이고 1px 크다 */
+export const locateChevron = (
+    <svg
+        className="block flex-none"
+        width={15}
+        height={15}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+    >
+        <path d="M9 5l7 7-7 7" />
     </svg>
 );

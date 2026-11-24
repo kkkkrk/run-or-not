@@ -1,4 +1,4 @@
-import type { AskLocation, TrainRow } from "@/types/ui";
+import type { AskLocation, SheetLocation, TrainRow } from "@/types/ui";
 import { KONKUK, type Station, type Trains, type Verdict } from "./u2-cases";
 
 /*
@@ -6,6 +6,7 @@ import { KONKUK, type Station, type Trains, type Verdict } from "./u2-cases";
  *
  * 숫자는 design/v32.html의 그림(스크립트 4절 「눌러지는 판정 화면」 · 6절 WAIT)과 같게 맞췄다.
  * 콜백과 가짜 상태(시트 열림 · 고른 시간)는 여기 없고 u3-screens.tsx에 있다.
+ * 호선 색(lineColor)은 결정.md 2절 「호선 색」 표의 값이다 (U6에서 옛 공식 색을 바꿨다).
  */
 
 /* ───────────────────────── 역 ───────────────────────── */
@@ -17,7 +18,7 @@ const KONKUK_LEFT: Station = { ...KONKUK, selected: "left" };
 const OGEUM: Station = {
     stationName: "오금",
     lineName: "3호선",
-    lineColor: "#EF7C1C",
+    lineColor: "#FF8939",
     left: "경찰병원",
     right: null,
     selected: "left",
@@ -27,7 +28,7 @@ const OGEUM: Station = {
 const SINDANG: Station = {
     stationName: "신당",
     lineName: "2호선",
-    lineColor: "#00A84D",
+    lineColor: "#3CB44A",
     left: "동대문역사문화공원",
     right: "상왕십리",
     selected: "right",
@@ -37,7 +38,7 @@ const SINDANG: Station = {
 const DDP: Station = {
     stationName: "동대문역사문화공원",
     lineName: "2호선",
-    lineColor: "#00A84D",
+    lineColor: "#3CB44A",
     left: "을지로4가",
     right: "신당",
     selected: "right",
@@ -63,21 +64,33 @@ export type SheetCase = Common & {
     open: boolean;      // 처음에 시트가 열려 있는지
     walkSec: number;    // 처음 값 (승강장까지 걸어서)
     runSec?: number;    // 처음 뛰면 값. 없으면 가짜 계산(fakeRunSec)으로 구한다. ± · 칩을 누른 뒤에는 늘 가짜 계산
-    distanceM?: number; // 있으면 처음 값이 내 위치로 계산한 값 — 「승강장까지」 줄에 화살표가 붙고 시트에 칠한 칩이 없다
+    location?: SheetLocation; // 처음 위치 줄 상태 (U7). 없으면 hidden — 위치 기능을 붙이기 전의 모습.
+                              // active(또는 source가 location인 locating)면 「승강장까지」 줄에 화살표가 붙고 시트에 칠한 칩이 없다
 };
 
 export type AskCase = Common & { kind: "ask"; location: AskLocation };
 export type FailedCase = Common & { kind: "failed"; statusCode: string | null };
 export type OfflineCase = Common & { kind: "offline" };
 export type StalledCase = Common & { kind: "stalled"; refreshing: boolean };
-export type LoadingCase = Omit<Common, "station"> & { kind: "loading"; station: Station | null };
+export type LoadingCase = Omit<Common, "station"> & {
+    kind: "loading";
+    station: Station | null;
+    step?: "locating" | "routing"; // 위치 · 걷는 길을 확인하는 중 (U7). 없으면 그냥 로딩
+};
 
 export type U3Case = SheetCase | AskCase | FailedCase | OfflineCase | StalledCase | LoadingCase;
 
 /* ───────────────────────── 1. 「승강장까지」 시트 ───────────────────────── */
 
 /** 내 위치로 계산한 값: 승강장까지 420m → 396초 · 228초. 10초 단위로 반올림해 6분 40초 · 3분50초로 보인다 (v32 「위치가 부정확할 때」의 거리) */
-const BY_LOCATION = { walkSec: 396, runSec: 228, distanceM: 420 };
+const BY_LOCATION = { walkSec: 396, runSec: 228, location: { status: "active", distanceM: 420, failed: false } } as const;
+
+/**
+ * 눌러 보기에서 「내 위치로 계산하기」를 눌렀을 때 나오는 가짜 결과 — v39 「승강장까지」 묶음의 값:
+ * 승강장까지 150m → 걸으면 150 ÷ 1.25 + 60 = 180초 · 뛰면 150 ÷ 2.5 + 60 = 120초
+ */
+export const FAKE_LOCATED = { walkSec: 180, runSec: 120, distanceM: 150 };
+const LOCATED = { walkSec: FAKE_LOCATED.walkSec, runSec: FAKE_LOCATED.runSec } as const;
 
 export const SHEET_CASES: SheetCase[] = [
     {
@@ -111,7 +124,7 @@ export const SHEET_CASES: SheetCase[] = [
         kind: "sheet",
         id: "sheet-location",
         name: "내 위치로 계산한 값",
-        note: "396초 → 「6분 40초」(10초 반올림) · 칠한 칩 없음 · 위치 줄 자체는 U7",
+        note: "396초 → 「6분 40초」(10초 반올림) · 칠한 칩 없음 · 검정 버튼 「내 위치로 계산 중 · 420m」",
         screen: "verdict",
         open: true,
         ...BY_LOCATION,
@@ -155,6 +168,132 @@ export const SHEET_CASES: SheetCase[] = [
     },
 ];
 
+/** 시트의 위치 줄 (U7) — 앞의 다섯 장은 v39 「승강장까지」 묶음의 그림과 같은 값이다 */
+export const SHEET_LOCATION_CASES: SheetCase[] = [
+    {
+        kind: "sheet",
+        id: "sheet-auto",
+        name: "자동 — 내 위치로 계산 중",
+        note: "v39 「승강장까지를 눌렀을 때」 · 버튼이 검정 「내 위치로 계산 중 · 150m」, 고른 칩 없음. 다시 누르면 새로 계산",
+        screen: "verdict",
+        open: true,
+        ...LOCATED,
+        location: { status: "active", distanceM: 150, failed: false },
+    },
+    {
+        kind: "sheet",
+        id: "sheet-once",
+        name: "칩을 고른 뒤 — 이번만 직접 입력",
+        note: "v39 「칩을 고른 뒤」 · 5분 칩이 검정, 버튼은 다시 「내 위치로 계산하기」 · 뒤 화면의 화살표가 사라짐",
+        screen: "verdict",
+        open: true,
+        walkSec: 300,
+        location: { status: "idle", failed: false },
+    },
+    {
+        kind: "sheet",
+        id: "sheet-idle",
+        name: "위치를 안 쓸 때 — 눌러 보기",
+        note: "v39 「위치를 안 쓸 때」 · 버튼을 누르면 「내 위치 확인 중…」 → 1.2초 뒤 계산이 끝나며 시트가 닫힘 (가짜)",
+        screen: "verdict",
+        open: true,
+        walkSec: 180,
+        location: { status: "idle", failed: false },
+    },
+    {
+        kind: "sheet",
+        id: "sheet-denied",
+        name: "위치를 거부했을 때",
+        note: "v39 「위치를 거부했을 때」 · 버튼 대신 안내 한 줄",
+        screen: "verdict",
+        open: true,
+        walkSec: 180,
+        location: { status: "denied" },
+    },
+    {
+        kind: "sheet",
+        id: "sheet-locating",
+        name: "내 위치 확인 중 — 직접 고른 값에서",
+        note: "버튼이 보조색 「내 위치 확인 중…」 · 눌러도 그대로 · 누르기 전 값이 직접 고른 값이라 3분 칩은 칠한 채",
+        screen: "verdict",
+        open: true,
+        walkSec: 180,
+        location: { status: "locating", source: "manual" },
+    },
+    {
+        kind: "sheet",
+        id: "sheet-locating-again",
+        name: "내 위치 확인 중 — 다시 계산",
+        note: "검정 버튼을 다시 누른 뒤 · 누르기 전 값이 위치로 계산한 값이라 칠한 칩이 없음",
+        screen: "verdict",
+        open: true,
+        ...LOCATED,
+        location: { status: "locating", source: "location" },
+    },
+    {
+        kind: "sheet",
+        id: "sheet-failed",
+        name: "위치를 못 찾았을 때 — 직접 입력 중",
+        note: "버튼 그대로 + 아래 한 줄 · 시트가 한 줄만큼 커짐(약 320px) · ± · 칩을 누르거나 닫으면 사라짐 (가짜)",
+        screen: "verdict",
+        open: true,
+        walkSec: 180,
+        location: { status: "idle", failed: true },
+    },
+    {
+        kind: "sheet",
+        id: "sheet-auto-failed",
+        name: "위치를 못 찾았을 때 — 자동이었으면",
+        note: "값이 여전히 위치로 계산한 값이라 검정 버튼 · 화살표는 그대로 + 아래 한 줄",
+        screen: "verdict",
+        open: true,
+        ...LOCATED,
+        location: { status: "active", distanceM: 150, failed: true },
+    },
+    {
+        kind: "sheet",
+        id: "sheet-unsupported",
+        name: "위치를 쓸 수 없는 브라우저",
+        note: "거부했을 때와 같은 자리에 「이 브라우저에서는 위치를 쓸 수 없어요」",
+        screen: "verdict",
+        open: true,
+        walkSec: 180,
+        location: { status: "unsupported" },
+    },
+    {
+        kind: "sheet",
+        id: "sheet-far",
+        name: "먼 거리 — km로 쓸 때",
+        note: "1240m → 「내 위치로 계산 중 · 1.2km」",
+        screen: "verdict",
+        open: true,
+        walkSec: 1052,
+        runSec: 556,
+        location: { status: "active", distanceM: 1240, failed: false },
+    },
+    {
+        kind: "sheet",
+        id: "sheet-auto-failed-small",
+        name: "가장 높은 시트 — 375 × 667",
+        note: "버튼 + 한 줄(약 320px)일 때 판정 글자 · 캐릭터가 그 위로 보이는지",
+        small: true,
+        screen: "verdict",
+        open: true,
+        ...LOCATED,
+        location: { status: "active", distanceM: 150, failed: true },
+    },
+    {
+        kind: "sheet",
+        id: "sheet-empty-auto",
+        name: "열차가 없어요 + 자동",
+        note: "「열차가 없어요」 화면의 시트에도 같은 위치 줄",
+        screen: "empty",
+        open: true,
+        ...LOCATED,
+        location: { status: "active", distanceM: 150, failed: false },
+    },
+];
+
 /* ───────────────────────── 2. 「승강장까지 몇 분?」 ───────────────────────── */
 
 export const ASK_CASES: AskCase[] = [
@@ -168,9 +307,30 @@ export const ASK_CASES: AskCase[] = [
     {
         kind: "ask",
         id: "ask-or",
-        name: "「또는 직접 고르기」 줄",
-        note: "location: idle — 줄 위의 검정 버튼 「내 위치로 계산하기」는 U7에서 채움",
+        name: "위치 버튼 + 「또는 직접 고르기」",
+        note: "location: idle — v39 「승강장까지 몇 분?」 그림. 검정 버튼을 누르면 콘솔에 onUseLocation()",
         location: "idle",
+    },
+    {
+        kind: "ask",
+        id: "ask-failed",
+        name: "위치를 못 찾았을 때",
+        note: "location: failed — 버튼 · 칩 그대로 + 카드 아래 한 줄 (시간 초과 · 사용 불가)",
+        location: "failed",
+    },
+    {
+        kind: "ask",
+        id: "ask-denied",
+        name: "거부했을 때",
+        note: "location: denied — v39 「거부했을 때」 그림. 버튼 없이 칩만 + 안내 한 줄",
+        location: "denied",
+    },
+    {
+        kind: "ask",
+        id: "ask-unsupported",
+        name: "위치를 쓸 수 없는 브라우저",
+        note: "location: unsupported — 거부와 같은 모양에 문구만 다름",
+        location: "unsupported",
     },
     {
         kind: "ask",
@@ -187,6 +347,14 @@ export const ASK_CASES: AskCase[] = [
         note: "제목이 한 줄인지",
         small: true,
         location: "hidden",
+    },
+    {
+        kind: "ask",
+        id: "ask-failed-small",
+        name: "못 찾았을 때 — 375 × 667",
+        note: "버튼 + 칩 + 안내 한 줄이 캡슐 위에 다 들어가는지 (v39 작은 화면 그림에 한 줄을 더한 것)",
+        small: true,
+        location: "failed",
     },
 ];
 
@@ -311,10 +479,42 @@ export const LOADING_CASES: LoadingCase[] = [
         small: true,
         station: KONKUK,
     },
+    {
+        kind: "loading",
+        id: "loading-locating",
+        name: "내 위치 확인 중",
+        note: "locationStep: locating — 스켈레톤 아래 한 줄 + 서 있는 캐릭터 (위치를 이미 허용한 채 역에 들어왔을 때)",
+        station: KONKUK,
+        step: "locating",
+    },
+    {
+        kind: "loading",
+        id: "loading-routing",
+        name: "걷는 길 계산 중",
+        note: "locationStep: routing — v39 「위치 · 걷는 길 확인 중」 그림",
+        station: KONKUK,
+        step: "routing",
+    },
+    {
+        kind: "loading",
+        id: "loading-routing-small",
+        name: "걷는 길 계산 중 — 375 × 667",
+        note: "",
+        small: true,
+        station: KONKUK,
+        step: "routing",
+    },
 ];
 
 /** 주소(?screen=…)로 한 장만 크게 볼 때 찾는 목록 */
-export const U3_CASES: U3Case[] = [...SHEET_CASES, ...ASK_CASES, ...EMPTY_CASES, ...DEAD_END_CASES, ...LOADING_CASES];
+export const U3_CASES: U3Case[] = [
+    ...SHEET_CASES,
+    ...SHEET_LOCATION_CASES,
+    ...ASK_CASES,
+    ...EMPTY_CASES,
+    ...DEAD_END_CASES,
+    ...LOADING_CASES,
+];
 
 /** 주소의 이름이 U3 화면인지 — page.tsx가 U2 · U3 가운데 어느 묶음에서 찾을지 정할 때 쓴다 */
 export const isU3Screen = (id: string) => U3_CASES.some((c) => c.id === id);

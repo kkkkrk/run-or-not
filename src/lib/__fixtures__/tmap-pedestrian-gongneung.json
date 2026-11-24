@@ -1,0 +1,592 @@
+{
+  "fetchedAt": "2026-11-23T22:01:49+09:00",
+  "url": "https://apis.openapi.sk.com/tmap/routes/pedestrian?version=1",
+  "why": "T맵 보행자 경로의 정상 응답 — 총거리(totalDistance)는 출발점 feature(features[0]) 하나에만 들어 있다",
+  "request": {
+    "startX": 127.076,
+    "startY": 37.629,
+    "endX": 127.072896,
+    "endY": 37.625742,
+    "startName": "내 위치",
+    "endName": "공릉",
+    "reqCoordType": "WGS84GEO",
+    "resCoordType": "WGS84GEO"
+  },
+  "httpStatus": 200,
+  "response": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            127.07601869121713,
+            37.6290075044432
+          ]
+        },
+        "properties": {
+          "totalDistance": 647,
+          "totalTime": 521,
+          "index": 0,
+          "pointIndex": 0,
+          "name": "",
+          "description": "31m 이동",
+          "direction": "",
+          "nearPoiName": "",
+          "nearPoiX": "0.0",
+          "nearPoiY": "0.0",
+          "intersectionName": "",
+          "facilityType": "11",
+          "facilityName": "",
+          "turnType": 200,
+          "pointType": "SP"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              127.07601869121713,
+              37.6290075044432
+            ],
+            [
+              127.07614368418123,
+              37.628854746690216
+            ],
+            [
+              127.07616868467512,
+              37.62875753622709
+            ]
+          ]
+        },
+        "properties": {
+          "index": 1,
+          "lineIndex": 0,
+          "name": "",
+          "description": ", 31m",
+          "distance": 31,
+          "time": 24,
+          "roadType": 22,
+          "categoryRoadType": 0,
+          "facilityType": "11",
+          "facilityName": ""
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            127.07616868467512,
+            37.62875753622709
+          ]
+        },
+        "properties": {
+          "index": 2,
+          "pointIndex": 1,
+          "name": "CU 공릉행복점",
+          "description": "CU 공릉행복점에서 좌회전 후 10m 이동",
+          "direction": "",
+          "nearPoiName": "CU 공릉행복점",
+          "nearPoiX": "0.0",
+          "nearPoiY": "0.0",
+          "intersectionName": "",
+          "facilityType": "11",
+          "facilityName": "",
+          "turnType": 12,
+          "pointType": "GP"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              127.07616868467512,
+              37.62875753622709
+            ],
+            [
+              127.07621312538575,
+              37.62874642721006
+            ],
+            [
+              127.07622701443461,
+              37.628696433276204
+            ]
+          ]
+        },
+        "properties": {
+          "index": 3,
+          "lineIndex": 1,
+          "name": "",
+          "description": ", 10m",
+          "distance": 10,
+          "time": 7,
+          "roadType": 22,
+          "categoryRoadType": 0,
+          "facilityType": "11",
+          "facilityName": ""
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            127.07622701443461,
+            37.628696433276204
+          ]
+        },
+        "properties": {
+          "index": 4,
+          "pointIndex": 2,
+          "name": "",
+          "description": "우회전 후 174m 이동",
+          "direction": "",
+          "nearPoiName": "",
+          "nearPoiX": "0.0",
+          "nearPoiY": "0.0",
+          "intersectionName": "",
+          "facilityType": "11",
+          "facilityName": "",
+          "turnType": 13,
+          "pointType": "GP"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              127.07622701443461,
+              37.628696433276204
+            ],
+            [
+              127.07617424598199,
+              37.628538117406876
+            ],
+            [
+              127.0761770242987,
+              37.62851034291009
+            ],
+            [
+              127.0762131406733,
+              37.62821037845496
+            ],
+            [
+              127.07623258770208,
+              37.628057618797705
+            ],
+            [
+              127.07626314237383,
+              37.627990960436286
+            ],
+            [
+              127.07632425195499,
+              37.62784931134936
+            ],
+            [
+              127.0763603621512,
+              37.627765988359975
+            ],
+            [
+              127.07664646136479,
+              37.62726882913084
+            ],
+            [
+              127.07672423245012,
+              37.62725494326037
+            ]
+          ]
+        },
+        "properties": {
+          "index": 5,
+          "lineIndex": 2,
+          "name": "",
+          "description": ", 174m",
+          "distance": 174,
+          "time": 154,
+          "roadType": 21,
+          "categoryRoadType": 0,
+          "facilityType": "11",
+          "facilityName": ""
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            127.07672423245012,
+            37.62725494326037
+          ]
+        },
+        "properties": {
+          "index": 6,
+          "pointIndex": 3,
+          "name": "생마차 공릉점",
+          "description": "생마차 공릉점에서 우측 횡단보도 후 보행자도로를 따라 13m 이동",
+          "direction": "",
+          "nearPoiName": "생마차 공릉점",
+          "nearPoiX": "0.0",
+          "nearPoiY": "0.0",
+          "intersectionName": "",
+          "facilityType": "15",
+          "facilityName": "",
+          "turnType": 213,
+          "pointType": "GP"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              127.07672423245012,
+              37.62725494326037
+            ],
+            [
+              127.07659369037722,
+              37.627199391811445
+            ]
+          ]
+        },
+        "properties": {
+          "index": 7,
+          "lineIndex": 3,
+          "name": "보행자도로",
+          "description": "보행자도로, 13m",
+          "distance": 13,
+          "time": 8,
+          "roadType": 21,
+          "categoryRoadType": 0,
+          "facilityType": "15",
+          "facilityName": ""
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            127.07659369037722,
+            37.627199391811445
+          ]
+        },
+        "properties": {
+          "index": 8,
+          "pointIndex": 4,
+          "name": "",
+          "description": "직진 후 336m 이동",
+          "direction": "",
+          "nearPoiName": "",
+          "nearPoiX": "0.0",
+          "nearPoiY": "0.0",
+          "intersectionName": "",
+          "facilityType": "11",
+          "facilityName": "",
+          "turnType": 11,
+          "pointType": "GP"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              127.07659369037722,
+              37.627199391811445
+            ],
+            [
+              127.07653258562772,
+              37.627171616162144
+            ],
+            [
+              127.0763992660302,
+              37.627116064663134
+            ],
+            [
+              127.07633538375605,
+              37.62708828896375
+            ],
+            [
+              127.07544936385796,
+              37.626721648960505
+            ],
+            [
+              127.07539936873165,
+              37.62671053823986
+            ],
+            [
+              127.07537992621774,
+              37.62670498297974
+            ],
+            [
+              127.07526327153025,
+              37.62665776414557
+            ],
+            [
+              127.0749827449495,
+              37.62653832853327
+            ],
+            [
+              127.07413005495013,
+              37.62618557640577
+            ],
+            [
+              127.07403006517268,
+              37.62614669023642
+            ],
+            [
+              127.0739467404637,
+              37.62611058182237
+            ],
+            [
+              127.07321348267608,
+              37.62580504857969
+            ]
+          ]
+        },
+        "properties": {
+          "index": 9,
+          "lineIndex": 4,
+          "name": "",
+          "description": ", 336m",
+          "distance": 336,
+          "time": 241,
+          "roadType": 21,
+          "categoryRoadType": 0,
+          "facilityType": "11",
+          "facilityName": ""
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            127.07321348267608,
+            37.62580504857969
+          ]
+        },
+        "properties": {
+          "index": 10,
+          "pointIndex": 5,
+          "name": "",
+          "description": "우회전 후 동일로를 따라 31m 이동",
+          "direction": "",
+          "nearPoiName": "",
+          "nearPoiX": "0.0",
+          "nearPoiY": "0.0",
+          "intersectionName": "공릉역",
+          "facilityType": "11",
+          "facilityName": "",
+          "turnType": 13,
+          "pointType": "GP"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              127.07321348267608,
+              37.62580504857969
+            ],
+            [
+              127.07317737517282,
+              37.62579393810963
+            ],
+            [
+              127.07308016094018,
+              37.625824488357864
+            ],
+            [
+              127.07301349591481,
+              37.62598002461848
+            ]
+          ]
+        },
+        "properties": {
+          "index": 11,
+          "lineIndex": 5,
+          "name": "동일로",
+          "description": "동일로, 31m",
+          "distance": 31,
+          "time": 52,
+          "roadType": 21,
+          "categoryRoadType": 0,
+          "facilityType": "11",
+          "facilityName": ""
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            127.07301349591481,
+            37.62598002461848
+          ]
+        },
+        "properties": {
+          "index": 12,
+          "pointIndex": 6,
+          "name": "공릉역 1번출구",
+          "description": "공릉역 1번출구에서 좌측 횡단보도 후 보행자도로를 따라 35m 이동",
+          "direction": "",
+          "nearPoiName": "공릉역 1번출구",
+          "nearPoiX": "0.0",
+          "nearPoiY": "0.0",
+          "intersectionName": "공릉역1번출구",
+          "facilityType": "15",
+          "facilityName": "",
+          "turnType": 212,
+          "pointType": "GP"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              127.07301349591481,
+              37.62598002461848
+            ],
+            [
+              127.0726551985654,
+              37.62586336505872
+            ]
+          ]
+        },
+        "properties": {
+          "index": 13,
+          "lineIndex": 6,
+          "name": "보행자도로",
+          "description": "보행자도로, 35m",
+          "distance": 35,
+          "time": 22,
+          "roadType": 21,
+          "categoryRoadType": 0,
+          "facilityType": "15",
+          "facilityName": ""
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            127.0726551985654,
+            37.62586336505872
+          ]
+        },
+        "properties": {
+          "index": 14,
+          "pointIndex": 7,
+          "name": "공릉역 4번출구",
+          "description": "공릉역 4번출구에서 좌회전 후 동일로를 따라 16m 이동",
+          "direction": "",
+          "nearPoiName": "공릉역 4번출구",
+          "nearPoiX": "0.0",
+          "nearPoiY": "0.0",
+          "intersectionName": "공릉역4번출구",
+          "facilityType": "11",
+          "facilityName": "",
+          "turnType": 12,
+          "pointType": "GP"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              127.0726551985654,
+              37.62586336505872
+            ],
+            [
+              127.07272186311555,
+              37.62572449352626
+            ]
+          ]
+        },
+        "properties": {
+          "index": 15,
+          "lineIndex": 7,
+          "name": "동일로",
+          "description": "동일로, 16m",
+          "distance": 16,
+          "time": 12,
+          "roadType": 21,
+          "categoryRoadType": 0,
+          "facilityType": "11",
+          "facilityName": ""
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              127.07272186311555,
+              37.62572449352626
+            ],
+            [
+              127.07272464087774,
+              37.625716161212274
+            ]
+          ]
+        },
+        "properties": {
+          "index": 16,
+          "lineIndex": 8,
+          "name": "",
+          "description": ", 1m",
+          "distance": 1,
+          "time": 1,
+          "roadType": 21,
+          "categoryRoadType": 0,
+          "facilityType": "11",
+          "facilityName": ""
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            127.07272464087774,
+            37.625716161212274
+          ]
+        },
+        "properties": {
+          "index": 17,
+          "pointIndex": 8,
+          "name": "공릉",
+          "description": "도착",
+          "direction": "",
+          "nearPoiName": "공릉",
+          "nearPoiX": "0.0",
+          "nearPoiY": "0.0",
+          "intersectionName": "공릉역",
+          "facilityType": "",
+          "facilityName": "",
+          "turnType": 201,
+          "pointType": "EP"
+        }
+      }
+    ]
+  }
+}

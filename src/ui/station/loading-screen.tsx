@@ -1,6 +1,7 @@
 import type { LoadingScreenProps } from "@/types/ui";
+import { locationArrow } from "@/ui/shared/icons";
 import { ScreenFrame } from "@/ui/shared/screen-frame";
-import { CARD_AREA, STAGE, TITLE_AREA } from "./screen-parts";
+import { CARD_AREA, STAGE, standingStage, TITLE_AREA } from "./screen-parts";
 
 /**
  * 스켈레톤의 면 (v32 CSS 7절 .skel + 9절 .th-light .skel): 옅은 회색 위로 밝은 띠가 1.4초에 한 번 지나간다.
@@ -34,12 +35,15 @@ const skeletonRow = (nameWidth: string, timeSize: string, divider: boolean) => (
  * 높이 48px · 바깥 여백 위 7px · 좌우 12px (h-12 · mt-1.75 · mx-3). 진짜 역명판이 들어와도 화면이 밀리지 않는다.
  *
  * 스켈레톤은 그림일 뿐이라 화면 낭독기에는 숨기고(aria-hidden), 대신 보이지 않는 글자 「불러오는 중」을 읽게 한다.
- * locationStep(「내 위치 확인 중」 · 「걷는 길 계산 중」 한 줄과 그때의 서 있는 캐릭터)은 U7에서 그린다. 그때까지는 받기만 한다.
  *
- * 크기 클래스의 숫자 × 4 = 시안의 px: h-11 = 44px, h-10 = 40px, h-6 = 24px, h-3 = 12px, mb-2 = 8px.
+ * 위치 · 걷는 길을 확인하는 동안(locationStep이 null이 아닐 때 — U7, 결정.md 1절, v39 CSS 9절 .status · whiteHTML()):
+ *   판정 글자 자리 스켈레톤 아래 10px에 한 줄 — 위치 화살표 14px + 「내 위치 확인 중」 → 「걷는 길 계산 중」 (15.5px / 600 · 보조색 · 가운데).
+ *   이때만 캐릭터가 서 있는 자세로 무대에 선다 (그냥 로딩에는 캐릭터가 없다). 한 줄은 role="status"라 글자가 바뀌면 읽어 준다.
+ *
+ * 크기 클래스의 숫자 × 4 = 시안의 px: h-11 = 44px, h-10 = 40px, h-6 = 24px, h-3 = 12px, mb-2 = 8px, mt-2.5 = 10px, gap-1.5 = 6px.
  */
 export function LoadingScreen(props: LoadingScreenProps) {
-    const { nameplate, bottomNav } = props;
+    const { nameplate, locationStep, bottomNav } = props;
 
     return (
         <ScreenFrame tone="white" nameplate={nameplate} bottomNav={bottomNav}>
@@ -48,16 +52,23 @@ export function LoadingScreen(props: LoadingScreenProps) {
             )}
 
             <div className={TITLE_AREA}>
-                <p role="status" className="sr-only">
-                    불러오는 중
-                </p>
+                {locationStep === null && (
+                    <p role="status" className="sr-only">
+                        불러오는 중
+                    </p>
+                )}
                 {/* 판정 글자 자리: 폭 62% · 높이 44px · 모서리 14px */}
                 <div aria-hidden="true" className={`mx-auto h-11 w-[62%] rounded-[14px] ${SKELETON}`} />
-                {/* 위치 확인 중 한 줄 자리 — U7에서 여기(스켈레톤 아래 10px)에 「내 위치 확인 중」 · 「걷는 길 계산 중」을 그린다 (locationStep) */}
+                {locationStep !== null && (
+                    <p role="status" className="mt-2.5 flex items-center justify-center gap-1.5 text-15.5 font-semibold text-sub">
+                        {locationArrow(14)}
+                        <span>{locationStep === "locating" ? "내 위치 확인 중" : "걷는 길 계산 중"}</span>
+                    </p>
+                )}
             </div>
 
-            {/* 캐릭터 무대: 자리만 있고 비어 있다 */}
-            <div className={STAGE} />
+            {/* 캐릭터 무대: 그냥 로딩이면 자리만 있고 비어 있다. 위치 · 걷는 길을 확인하는 동안에는 서 있는 캐릭터 */}
+            {locationStep === null ? <div className={STAGE} /> : standingStage}
 
             <div className={CARD_AREA}>
                 {/* 열차 카드 모양: 「승강장까지」 줄 자리(44px, 모서리 없이 카드 폭 가득) + 판정 대상 열차 줄 + 다음 열차 줄 */}

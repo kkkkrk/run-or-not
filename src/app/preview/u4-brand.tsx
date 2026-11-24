@@ -165,7 +165,7 @@ export function U4BrandPreview() {
                                 <div className="flex flex-col gap-0.75 px-3 pt-2.5 pb-2.75">
                                     <b className="text-14 font-bold text-[#111827]">{OG.title}</b>
                                     <span className="text-12.5 text-[#4B5563]">{OG.description}</span>
-                                    <small className="mt-1.25 text-[11px] text-[#6B7280]">{OG.host}</small>
+                                    <small className="mt-1.25 text-11 text-[#6B7280]">{OG.host}</small>
                                 </div>
                             </div>
                         </div>

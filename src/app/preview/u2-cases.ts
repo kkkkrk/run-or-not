@@ -6,6 +6,7 @@ import type { RefreshButtonProps, StationNameplateProps, TrainRow, VerdictScreen
  * 숫자는 design/v32.html의 그림(스크립트 3절 SCREENS · NEAR · FAR · MISSED, 4절 눌러지는 화면)과 같게 맞췄다.
  * 그래야 미리보기와 시안을 나란히 놓고 같은 글자끼리 비교할 수 있다.
  * 콜백(onSelect · onPress · onRefresh …)은 여기 없고, u2-verdict.tsx가 콘솔에 찍는 함수를 붙인다.
+ * 호선 색(lineColor)은 결정.md 2절 「호선 색」 표의 값이다 — 카카오맵 노선도 색. U6(2026-11-20)에서 옛 공식 색을 바꿨다 (우이신설선은 그대로).
  */
 
 export type Verdict = VerdictScreenProps["verdict"];
@@ -38,7 +39,7 @@ export type ScreenCase = {
 export const KONKUK: Station = {
     stationName: "건대입구",
     lineName: "7호선",
-    lineColor: "#747F00",
+    lineColor: "#727718",
     left: "어린이대공원",
     right: "자양",
     selected: "right",
@@ -54,7 +55,7 @@ export const NAMEPLATES: { name: string; note: string; station: Station }[] = [
         station: {
             stationName: "동대문역사문화공원",
             lineName: "2호선",
-            lineColor: "#00A84D",
+            lineColor: "#3CB44A",
             left: "을지로4가",
             right: "신당",
             selected: "right",
@@ -66,7 +67,7 @@ export const NAMEPLATES: { name: string; note: string; station: Station }[] = [
         station: {
             stationName: "디지털미디어시티",
             lineName: "6호선",
-            lineColor: "#CD7C2F",
+            lineColor: "#B55E16",
             left: "월드컵경기장",
             right: "증산",
             selected: "left",
@@ -78,7 +79,7 @@ export const NAMEPLATES: { name: string; note: string; station: Station }[] = [
         station: {
             stationName: "신당",
             lineName: "2호선",
-            lineColor: "#00A84D",
+            lineColor: "#3CB44A",
             left: "동대문역사문화공원",
             right: "상왕십리",
             selected: "left",
@@ -90,7 +91,7 @@ export const NAMEPLATES: { name: string; note: string; station: Station }[] = [
         station: {
             stationName: "구로디지털단지",
             lineName: "2호선",
-            lineColor: "#00A84D",
+            lineColor: "#3CB44A",
             left: "신대방",
             right: "대림",
             selected: "right",
@@ -102,7 +103,7 @@ export const NAMEPLATES: { name: string; note: string; station: Station }[] = [
         station: {
             stationName: "오금",
             lineName: "3호선",
-            lineColor: "#EF7C1C",
+            lineColor: "#FF8939",
             left: "경찰병원",
             right: null,
             selected: "left",
@@ -114,7 +115,7 @@ export const NAMEPLATES: { name: string; note: string; station: Station }[] = [
         station: {
             stationName: "장암",
             lineName: "7호선",
-            lineColor: "#747F00",
+            lineColor: "#727718",
             left: null,
             right: "도봉산",
             selected: "right",
@@ -146,11 +147,11 @@ export const NAMEPLATES: { name: string; note: string; station: Station }[] = [
     },
     {
         name: "9호선 배지",
-        note: "노선색이 밝은 편 — 숫자는 결정.md대로 흰색",
+        note: "노선색이 밝은 편(흰 숫자 대비 2.3 : 1) — 숫자는 결정.md대로 흰색",
         station: {
             stationName: "노량진",
             lineName: "9호선",
-            lineColor: "#BDB092",
+            lineColor: "#CEA43A",
             left: "노들",
             right: "샛강",
             selected: "right",
@@ -410,7 +411,7 @@ export const SMALL_CASES: ScreenCase[] = [
         station: {
             stationName: "동대문역사문화공원",
             lineName: "2호선",
-            lineColor: "#00A84D",
+            lineColor: "#3CB44A",
             left: "을지로4가",
             right: "신당",
             selected: "right",
